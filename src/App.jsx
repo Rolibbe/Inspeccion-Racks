@@ -87,6 +87,21 @@ function App() {
     }));
   }
 
+  function handleBulkRename(nextNames) {
+    setCellDetails((currentDetails) => {
+      const updatedDetails = { ...currentDetails };
+
+      Object.entries(nextNames).forEach(([cellId, locationName]) => {
+        updatedDetails[cellId] = {
+          ...(updatedDetails[cellId] || {}),
+          locationName,
+        };
+      });
+
+      return updatedDetails;
+    });
+  }
+
   return (
     <main className="app-shell">
       {screen === 'home' && <HomeScreen onNewInspection={handleNewInspection} />}
@@ -108,6 +123,7 @@ function App() {
           cellDetails={cellDetails}
           onSelectCell={handleSelectCell}
           onUpdateCell={handleUpdateCell}
+          onBulkRename={handleBulkRename}
           onEdit={() => setScreen('configuration')}
           onNewInspection={handleNewInspection}
           onPrint={() => window.print()}
@@ -249,6 +265,7 @@ function RackScreen({
   cellDetails,
   onSelectCell,
   onUpdateCell,
+  onBulkRename,
   onEdit,
   onNewInspection,
   onPrint,
@@ -301,6 +318,8 @@ function RackScreen({
           }
         />
       </div>
+
+      <BulkRenamePanel positions={flatPositions} onApply={onBulkRename} />
 
       <div className="rack-board-wrapper" aria-label="Cuadricula del rack">
         <div
@@ -515,6 +534,140 @@ function ReportMetric({ label, value, tone }) {
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
+  );
+}
+
+function BulkRenamePanel({ positions, onApply }) {
+  const [settings, setSettings] = useState({
+    pattern: 'bay-level',
+    bayPrefix: 'Bahia',
+    levelPrefix: 'Nivel',
+    separator: ' / ',
+    bayPadding: 0,
+    levelPadding: 0,
+    invertLevels: false,
+  });
+
+  const previewPositions = positions.slice(0, 4);
+
+  function handleChange(event) {
+    const { name, type, checked, value } = event.target;
+
+    setSettings((currentSettings) => ({
+      ...currentSettings,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  }
+
+  function formatNumber(value, padding) {
+    const size = Number(padding);
+    return size > 0 ? String(value).padStart(size, '0') : String(value);
+  }
+
+  function buildName(position) {
+    const bay = formatNumber(position.bay, settings.bayPadding);
+    const levelValue = settings.invertLevels
+      ? Math.max(...positions.map((currentPosition) => currentPosition.level)) - position.level + 1
+      : position.level;
+    const level = formatNumber(levelValue, settings.levelPadding);
+
+    if (settings.pattern === 'level-bay') {
+      return `${settings.levelPrefix} ${level}${settings.separator}${settings.bayPrefix} ${bay}`;
+    }
+
+    if (settings.pattern === 'compact') {
+      return `${settings.bayPrefix}${bay}-${settings.levelPrefix}${level}`;
+    }
+
+    return `${settings.bayPrefix} ${bay}${settings.separator}${settings.levelPrefix} ${level}`;
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+
+    const nextNames = positions.reduce((names, position) => {
+      names[position.id] = buildName(position);
+      return names;
+    }, {});
+
+    onApply(nextNames);
+  }
+
+  return (
+    <form className="bulk-rename-panel" onSubmit={handleSubmit}>
+      <div className="bulk-rename-header">
+        <div>
+          <p className="eyebrow">Nombres masivos</p>
+          <h2>Renombrar todas las ubicaciones</h2>
+        </div>
+        <button className="primary-action" type="submit">
+          Aplicar a todo el rack
+        </button>
+      </div>
+
+      <div className="bulk-rename-grid">
+        <label>
+          <span>Formato</span>
+          <select name="pattern" value={settings.pattern} onChange={handleChange}>
+            <option value="bay-level">Bahia / Nivel</option>
+            <option value="level-bay">Nivel / Bahia</option>
+            <option value="compact">Compacto</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Nombre de bahia</span>
+          <input name="bayPrefix" value={settings.bayPrefix} onChange={handleChange} />
+        </label>
+
+        <label>
+          <span>Nombre de nivel</span>
+          <input name="levelPrefix" value={settings.levelPrefix} onChange={handleChange} />
+        </label>
+
+        <label>
+          <span>Separador</span>
+          <input name="separator" value={settings.separator} onChange={handleChange} />
+        </label>
+
+        <label>
+          <span>Ceros en bahia</span>
+          <select name="bayPadding" value={settings.bayPadding} onChange={handleChange}>
+            <option value="0">Sin ceros</option>
+            <option value="2">01, 02, 03</option>
+            <option value="3">001, 002, 003</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Ceros en nivel</span>
+          <select name="levelPadding" value={settings.levelPadding} onChange={handleChange}>
+            <option value="0">Sin ceros</option>
+            <option value="2">01, 02, 03</option>
+            <option value="3">001, 002, 003</option>
+          </select>
+        </label>
+
+        <label className="checkbox-field">
+          <input
+            name="invertLevels"
+            type="checkbox"
+            checked={settings.invertLevels}
+            onChange={handleChange}
+          />
+          <span>Invertir numeracion de niveles</span>
+        </label>
+      </div>
+
+      <div className="bulk-preview">
+        <span>Vista previa</span>
+        <div>
+          {previewPositions.map((position) => (
+            <strong key={position.id}>{buildName(position)}</strong>
+          ))}
+        </div>
+      </div>
+    </form>
   );
 }
 

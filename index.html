@@ -295,6 +295,82 @@
         font-size: 1.35rem;
       }
 
+      .bulk-rename-panel {
+        display: grid;
+        gap: 16px;
+        margin-bottom: 18px;
+        padding: 18px;
+        background: #ffffff;
+        border: 1px solid #dce4ea;
+        border-radius: 8px;
+        box-shadow: 0 16px 44px rgba(34, 51, 68, 0.08);
+      }
+
+      .bulk-rename-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .bulk-rename-header h2 {
+        margin: 0;
+        color: #17202a;
+        font-size: 1.28rem;
+      }
+
+      .bulk-rename-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .checkbox-field {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 0 12px;
+        border: 1px solid #c8d3db;
+        border-radius: 8px;
+        background: #fbfcfd;
+      }
+
+      .checkbox-field input {
+        width: 18px;
+        height: 18px;
+      }
+
+      .bulk-preview {
+        display: grid;
+        gap: 8px;
+        padding: 12px;
+        border-radius: 8px;
+        background: #f8fafb;
+        border: 1px dashed #c8d3db;
+      }
+
+      .bulk-preview > span {
+        color: #667685;
+        font-size: 0.76rem;
+        font-weight: 850;
+        text-transform: uppercase;
+      }
+
+      .bulk-preview div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .bulk-preview strong {
+        border-radius: 999px;
+        padding: 6px 10px;
+        background: #e9f5f3;
+        color: #1f6f66;
+        font-size: 0.86rem;
+      }
+
       .notes-panel {
         margin-top: 18px;
         padding: 18px;
@@ -653,6 +729,7 @@
 
         .configuration-form,
         .cell-editor,
+        .bulk-rename-grid,
         .report-grid,
         .report-kpis,
         .report-topline,
@@ -663,6 +740,10 @@
         }
 
         .report-cover {
+          display: grid;
+        }
+
+        .bulk-rename-header {
           display: grid;
         }
 
@@ -694,6 +775,7 @@
         .rack-summary,
         .rack-board-wrapper,
         .cell-editor,
+        .bulk-rename-panel,
         .notes-panel {
           display: none !important;
         }
@@ -789,6 +871,15 @@
         config: null,
         selectedCell: null,
         cellDetails: {},
+        bulkRename: {
+          pattern: 'bay-level',
+          bayPrefix: 'Bahia',
+          levelPrefix: 'Nivel',
+          separator: ' / ',
+          bayPadding: '0',
+          levelPadding: '0',
+          invertLevels: false,
+        },
       };
 
       const root = document.getElementById('root');
@@ -879,6 +970,7 @@
           ? selectedLabelFor(appState.selectedCell)
           : 'Sin seleccionar';
         const editor = appState.selectedCell ? renderCellEditor(appState.selectedCell) : '';
+        const bulkRenamePanel = renderBulkRenamePanel(positions);
         const reportItems = positions
           .map((position) => ({
             ...position,
@@ -910,6 +1002,7 @@
               <div class="summary-item"><span>Espacios libres</span><strong>${freeSpaceCount}</strong></div>
               <div class="summary-item"><span>Seleccion</span><strong>${escapeHtml(selectedLabel)}</strong></div>
             </div>
+            ${bulkRenamePanel}
             <div class="rack-board-wrapper">
               <div class="rack-board" style="grid-template-columns: repeat(${config.bays}, minmax(112px, 1fr));">${cells.join('')}</div>
             </div>
@@ -926,6 +1019,87 @@
             <span>${escapeHtml(label)}</span>
             <strong>${escapeHtml(value)}</strong>
           </div>
+        `;
+      }
+
+      function formatLocationNumber(value, padding) {
+        const size = Number(padding);
+        return size > 0 ? String(value).padStart(size, '0') : String(value);
+      }
+
+      function buildBulkLocationName(position, positions, settings) {
+        const bay = formatLocationNumber(position.bay, settings.bayPadding);
+        const maxLevel = Math.max(...positions.map((currentPosition) => currentPosition.level));
+        const levelValue = settings.invertLevels ? maxLevel - position.level + 1 : position.level;
+        const level = formatLocationNumber(levelValue, settings.levelPadding);
+
+        if (settings.pattern === 'level-bay') {
+          return `${settings.levelPrefix} ${level}${settings.separator}${settings.bayPrefix} ${bay}`;
+        }
+
+        if (settings.pattern === 'compact') {
+          return `${settings.bayPrefix}${bay}-${settings.levelPrefix}${level}`;
+        }
+
+        return `${settings.bayPrefix} ${bay}${settings.separator}${settings.levelPrefix} ${level}`;
+      }
+
+      function renderBulkRenamePanel(positions) {
+        const settings = appState.bulkRename;
+        const preview = positions
+          .slice(0, 4)
+          .map((position) => `<strong>${escapeHtml(buildBulkLocationName(position, positions, settings))}</strong>`)
+          .join('');
+
+        return `
+          <form class="bulk-rename-panel" data-form="bulk-rename">
+            <div class="bulk-rename-header">
+              <div>
+                <p class="eyebrow">Nombres masivos</p>
+                <h2>Renombrar todas las ubicaciones</h2>
+              </div>
+              <button class="primary-action" type="submit">Aplicar a todo el rack</button>
+            </div>
+
+            <div class="bulk-rename-grid">
+              <label>
+                <span>Formato</span>
+                <select name="pattern">
+                  <option value="bay-level"${settings.pattern === 'bay-level' ? ' selected' : ''}>Bahia / Nivel</option>
+                  <option value="level-bay"${settings.pattern === 'level-bay' ? ' selected' : ''}>Nivel / Bahia</option>
+                  <option value="compact"${settings.pattern === 'compact' ? ' selected' : ''}>Compacto</option>
+                </select>
+              </label>
+              <label><span>Nombre de bahia</span><input name="bayPrefix" value="${escapeHtml(settings.bayPrefix)}"></label>
+              <label><span>Nombre de nivel</span><input name="levelPrefix" value="${escapeHtml(settings.levelPrefix)}"></label>
+              <label><span>Separador</span><input name="separator" value="${escapeHtml(settings.separator)}"></label>
+              <label>
+                <span>Ceros en bahia</span>
+                <select name="bayPadding">
+                  <option value="0"${settings.bayPadding === '0' ? ' selected' : ''}>Sin ceros</option>
+                  <option value="2"${settings.bayPadding === '2' ? ' selected' : ''}>01, 02, 03</option>
+                  <option value="3"${settings.bayPadding === '3' ? ' selected' : ''}>001, 002, 003</option>
+                </select>
+              </label>
+              <label>
+                <span>Ceros en nivel</span>
+                <select name="levelPadding">
+                  <option value="0"${settings.levelPadding === '0' ? ' selected' : ''}>Sin ceros</option>
+                  <option value="2"${settings.levelPadding === '2' ? ' selected' : ''}>01, 02, 03</option>
+                  <option value="3"${settings.levelPadding === '3' ? ' selected' : ''}>001, 002, 003</option>
+                </select>
+              </label>
+              <label class="checkbox-field">
+                <input name="invertLevels" type="checkbox"${settings.invertLevels ? ' checked' : ''}>
+                <span>Invertir numeracion de niveles</span>
+              </label>
+            </div>
+
+            <div class="bulk-preview">
+              <span>Vista previa</span>
+              <div>${preview}</div>
+            </div>
+          </form>
         `;
       }
 
@@ -1113,6 +1287,15 @@
           appState.config = null;
           appState.selectedCell = null;
           appState.cellDetails = {};
+          appState.bulkRename = {
+            pattern: 'bay-level',
+            bayPrefix: 'Bahia',
+            levelPrefix: 'Nivel',
+            separator: ' / ',
+            bayPadding: '0',
+            levelPadding: '0',
+            invertLevels: false,
+          };
           renderConfiguration();
         }
 
@@ -1124,6 +1307,24 @@
           appState.selectedCell = cell.dataset.cell;
           renderRack();
         }
+      });
+
+      root.addEventListener('change', (event) => {
+        if (!event.target.closest('[data-form="bulk-rename"]')) return;
+        const form = event.target.closest('[data-form="bulk-rename"]');
+        const formData = new FormData(form);
+
+        appState.bulkRename = {
+          pattern: String(formData.get('pattern')),
+          bayPrefix: String(formData.get('bayPrefix')),
+          levelPrefix: String(formData.get('levelPrefix')),
+          separator: String(formData.get('separator')),
+          bayPadding: String(formData.get('bayPadding')),
+          levelPadding: String(formData.get('levelPadding')),
+          invertLevels: Boolean(formData.get('invertLevels')),
+        };
+
+        renderRack();
       });
 
       root.addEventListener('submit', (event) => {
@@ -1157,6 +1358,38 @@
           status: String(formData.get('status')),
           finding: String(formData.get('finding')).trim(),
         };
+
+        renderRack();
+      });
+
+      root.addEventListener('submit', (event) => {
+        if (!event.target.matches('[data-form="bulk-rename"]')) return;
+        event.preventDefault();
+
+        const formData = new FormData(event.target);
+        appState.bulkRename = {
+          pattern: String(formData.get('pattern')),
+          bayPrefix: String(formData.get('bayPrefix')),
+          levelPrefix: String(formData.get('levelPrefix')),
+          separator: String(formData.get('separator')),
+          bayPadding: String(formData.get('bayPadding')),
+          levelPadding: String(formData.get('levelPadding')),
+          invertLevels: Boolean(formData.get('invertLevels')),
+        };
+
+        const positions = [];
+        for (let level = appState.config.levels; level >= 1; level -= 1) {
+          for (let bay = 1; bay <= appState.config.bays; bay += 1) {
+            positions.push({ id: `B${bay}-N${level}`, bay, level });
+          }
+        }
+
+        positions.forEach((position) => {
+          appState.cellDetails[position.id] = {
+            ...(appState.cellDetails[position.id] || {}),
+            locationName: buildBulkLocationName(position, positions, appState.bulkRename),
+          };
+        });
 
         renderRack();
       });
