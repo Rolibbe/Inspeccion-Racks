@@ -36,6 +36,7 @@
       }
 
       .home-view {
+        position: relative;
         display: grid;
         align-content: center;
         gap: 32px;
@@ -47,8 +48,28 @@
         color: #ffffff;
       }
 
+      .hero-brand {
+        position: absolute;
+        top: 28px;
+        left: 32px;
+        display: inline-flex;
+        align-items: center;
+        min-height: 72px;
+        border-radius: 8px;
+        padding: 10px 16px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.22);
+      }
+
+      .hero-brand img {
+        display: block;
+        width: min(210px, 48vw);
+        height: auto;
+      }
+
       .home-copy {
         max-width: 760px;
+        padding-top: 86px;
       }
 
       h1 {
@@ -69,6 +90,109 @@
         font-size: 1.08rem;
       }
 
+      .saved-drawer {
+        position: fixed;
+        top: 18px;
+        right: 18px;
+        z-index: 20;
+        display: grid;
+        justify-items: end;
+        gap: 10px;
+      }
+
+      .menu-toggle {
+        display: grid;
+        place-items: center;
+        gap: 4px;
+        width: 48px;
+        height: 48px;
+        border: 1px solid #d3dce3;
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 14px 34px rgba(34, 51, 68, 0.14);
+      }
+
+      .menu-toggle span {
+        display: block;
+        width: 20px;
+        height: 2px;
+        border-radius: 999px;
+        background: #17202a;
+      }
+
+      .saved-drawer-panel {
+        width: min(420px, calc(100vw - 36px));
+        max-height: calc(100vh - 86px);
+        overflow: auto;
+        padding: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 8px;
+        background: rgba(12, 22, 30, 0.94);
+        box-shadow: 0 20px 46px rgba(0, 0, 0, 0.28);
+        backdrop-filter: blur(8px);
+      }
+
+      .saved-inspections-header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 12px;
+      }
+
+      .saved-inspections-header h2 {
+        margin: 0;
+        color: #ffffff;
+        font-size: 1.25rem;
+      }
+
+      .saved-inspections-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .saved-inspection-card {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .saved-inspection-card span {
+        color: #8be0d3;
+        font-size: 0.76rem;
+        font-weight: 850;
+        text-transform: uppercase;
+      }
+
+      .saved-inspection-card h3 {
+        margin: 3px 0;
+        color: #ffffff;
+        font-size: 1.2rem;
+      }
+
+      .saved-inspection-card p,
+      .saved-inspection-card small {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.75);
+      }
+
+      .saved-inspection-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .empty-saved-message {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.78);
+      }
+
       .eyebrow {
         margin: 0 0 10px;
         color: #2f8f83;
@@ -82,8 +206,16 @@
         color: #8be0d3;
       }
 
+      .home-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
       .primary-action,
-      .secondary-action {
+      .secondary-action,
+      .ghost-action {
         min-height: 48px;
         border: 0;
         border-radius: 8px;
@@ -102,6 +234,12 @@
         background: #ffffff;
         color: #263442;
         border: 1px solid #d3dce3;
+      }
+
+      .ghost-action {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.28);
       }
 
       .workspace-view {
@@ -217,6 +355,42 @@
         box-shadow: 0 16px 44px rgba(34, 51, 68, 0.14);
       }
 
+      .rack-visual-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 18px;
+        padding: 16px 18px;
+        background: #ffffff;
+        border: 1px solid #dce4ea;
+        border-radius: 8px 8px 0 0;
+      }
+
+      .rack-visual-toolbar h2 {
+        margin: 0;
+        color: #17202a;
+        font-size: 1.2rem;
+      }
+
+      .rack-visual-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .save-message {
+        color: #1f6f66;
+        font-size: 0.86rem;
+        font-weight: 850;
+      }
+
+      .rack-visual-toolbar + .rack-board-wrapper {
+        border-radius: 0 0 8px 8px;
+      }
+
       .rack-board {
         display: grid;
         gap: 10px;
@@ -226,11 +400,11 @@
       .rack-cell {
         display: grid;
         align-content: center;
-        gap: 5px;
-        min-height: 88px;
+        gap: 4px;
+        min-height: 74px;
         border: 2px solid #667685;
         border-radius: 8px;
-        padding: 14px;
+        padding: 10px;
         background: #f7fafc;
         color: #263442;
         text-align: left;
@@ -265,7 +439,7 @@
         width: fit-content;
         margin-top: 4px;
         border-radius: 999px;
-        padding: 3px 8px;
+        padding: 2px 7px;
         background: rgba(23, 32, 42, 0.08);
         color: currentColor;
         font-size: 0.72rem;
@@ -273,11 +447,50 @@
         font-weight: 800;
       }
 
+      .rack-cell span {
+        overflow-wrap: anywhere;
+      }
+
+      .damage-badge.leve {
+        background: #e9f5f3;
+        color: #1f6f66;
+      }
+
+      .damage-badge.moderado {
+        background: #fff5da;
+        color: #8a5b00;
+      }
+
+      .damage-badge.grave {
+        background: #fff1ef;
+        color: #9f3028;
+      }
+
+      .damage-badge.critico {
+        background: #202a33;
+        color: #ffffff;
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 30;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        background: rgba(15, 25, 35, 0.56);
+      }
+
+      .modal-panel {
+        width: min(760px, 100%);
+        max-height: min(92vh, 780px);
+        overflow: auto;
+      }
+
       .cell-editor {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 18px;
-        margin-top: 18px;
         padding: 22px;
         background: #ffffff;
         border: 1px solid #dce4ea;
@@ -285,7 +498,15 @@
         box-shadow: 0 16px 44px rgba(34, 51, 68, 0.08);
       }
 
-      .cell-editor > div:first-child {
+      .modal-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .cell-editor > div:first-child,
+      .modal-header {
         grid-column: 1 / -1;
       }
 
@@ -293,6 +514,31 @@
         margin: 0;
         color: #17202a;
         font-size: 1.35rem;
+      }
+
+      .icon-action {
+        display: inline-grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border: 1px solid #c8d3db;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #17202a;
+        font-weight: 900;
+      }
+
+      .photo-preview {
+        display: grid;
+        gap: 10px;
+      }
+
+      .photo-preview img {
+        width: min(260px, 100%);
+        max-height: 180px;
+        object-fit: cover;
+        border: 1px solid #dce4ea;
+        border-radius: 8px;
       }
 
       .bulk-rename-panel {
@@ -547,6 +793,14 @@
         text-transform: uppercase;
       }
 
+      .report-photo {
+        width: 92px;
+        max-height: 70px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid #dce4ea;
+      }
+
       .report-footer {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -723,7 +977,35 @@
           padding: 20px;
         }
 
+        .hero-brand {
+          position: static;
+          width: fit-content;
+          min-height: 60px;
+          padding: 8px 12px;
+        }
+
+        .hero-brand img {
+          width: min(180px, 72vw);
+        }
+
+        .home-copy {
+          padding-top: 0;
+        }
+
+        .saved-inspections-header,
+        .saved-inspection-card {
+          display: grid;
+        }
+
+        .saved-inspection-actions {
+          justify-content: stretch;
+        }
+
         .section-header {
+          display: grid;
+        }
+
+        .rack-visual-toolbar {
           display: grid;
         }
 
@@ -747,8 +1029,14 @@
           display: grid;
         }
 
+        .home-actions,
+        .rack-visual-actions {
+          justify-content: stretch;
+        }
+
         .primary-action,
-        .secondary-action {
+        .secondary-action,
+        .ghost-action {
           width: 100%;
         }
 
@@ -772,7 +1060,9 @@
         }
 
         .workspace-view > .section-header,
+        .saved-drawer,
         .rack-summary,
+        .rack-visual-toolbar,
         .rack-board-wrapper,
         .cell-editor,
         .bulk-rename-panel,
@@ -844,7 +1134,8 @@
         }
 
         .primary-action,
-        .secondary-action {
+        .secondary-action,
+        .ghost-action {
           display: none !important;
         }
       }
@@ -853,36 +1144,133 @@
   <body>
     <div id="root">
       <section class="home-view" data-screen="home">
+        <div class="hero-brand" aria-label="FMC Industrial">
+          <img src="logo.png" alt="FMC Industrial">
+        </div>
+
         <div class="home-copy">
-          <p class="eyebrow">Inspeccion industrial</p>
-          <h1>Racks configurables para inspecciones en campo</h1>
+          <p class="eyebrow">FMC Industrial</p>
+          <h1>Inspeccion de racks industriales</h1>
           <p>
             Crea la estructura del rack antes de revisarlo y trabaja con una cuadricula visual
             adaptada a cada empresa, area y numero de rack.
           </p>
         </div>
-        <button class="primary-action" type="button" data-action="new-inspection">
-          Nueva inspeccion
-        </button>
+        <div class="home-actions">
+          <button class="primary-action" type="button" data-action="new-inspection">
+            Nueva inspeccion
+          </button>
+        </div>
       </section>
     </div>
     <script>
+      const damageLevels = [
+        { value: 'none', label: 'Sin dano' },
+        { value: 'leve', label: 'Leve' },
+        { value: 'moderado', label: 'Moderado' },
+        { value: 'grave', label: 'Grave' },
+        { value: 'critico', label: 'Critico' },
+      ];
+
+      const storageKey = 'fmcRackInspections.v1';
+      const legacyStorageKey = 'fmcRackInspection.current';
+
+      function createInspectionId() {
+        return `inspection-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function loadSavedInspections() {
+        try {
+          const savedInspections = localStorage.getItem(storageKey);
+          if (savedInspections) {
+            return JSON.parse(savedInspections).map((inspection) => ({
+              ...inspection,
+              config: inspection.config || inspection.rackConfig || null,
+            }));
+          }
+
+          const legacyInspection = localStorage.getItem(legacyStorageKey);
+          if (!legacyInspection) return [];
+
+          const parsedInspection = JSON.parse(legacyInspection);
+
+          return [{
+            id: createInspectionId(),
+            config: parsedInspection.config || parsedInspection.rackConfig || null,
+            selectedCell: parsedInspection.selectedCell || null,
+            cellDetails: parsedInspection.cellDetails || {},
+            bulkRename: parsedInspection.bulkRename || {
+              rackName: parsedInspection.config?.rackNumber || parsedInspection.rackConfig?.rackNumber || '01',
+              bayNumber: '001',
+              levelNumber: '01',
+            },
+            updatedAt: parsedInspection.savedAt || new Date().toISOString(),
+          }];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveInspections() {
+        localStorage.setItem(storageKey, JSON.stringify(appState.inspections));
+      }
+
+      function saveCurrentInspection() {
+        if (!appState.activeInspectionId || !hasActiveWork()) return;
+
+        const updatedAt = new Date().toISOString();
+        const nextInspection = {
+          id: appState.activeInspectionId,
+          config: appState.config,
+          selectedCell: appState.selectedCell,
+          cellDetails: appState.cellDetails,
+          bulkRename: appState.bulkRename,
+          companyName: appState.config?.companyName || '',
+          rackArea: appState.config?.rackArea || '',
+          rackNumber: appState.config?.rackNumber || '',
+          rackType: appState.config?.rackType || '',
+          updatedAt,
+        };
+
+        const existingIndex = appState.inspections.findIndex((inspection) => (
+          inspection.id === appState.activeInspectionId
+        ));
+
+        if (existingIndex === -1) {
+          appState.inspections.unshift(nextInspection);
+        } else {
+          appState.inspections[existingIndex] = nextInspection;
+        }
+
+        appState.inspections.sort((first, second) => (
+          (second.updatedAt || '').localeCompare(first.updatedAt || '')
+        ));
+        saveInspections();
+      }
+
+      function hasActiveWork() {
+        return Boolean(appState.config || Object.keys(appState.cellDetails).length);
+      }
+
       const appState = {
+        inspections: loadSavedInspections(),
+        activeInspectionId: null,
+        savedPanelOpen: false,
+        saveMessage: '',
         config: null,
         selectedCell: null,
+        draftPhotos: {},
         cellDetails: {},
         bulkRename: {
-          pattern: 'bay-level',
-          bayPrefix: 'Bahia',
-          levelPrefix: 'Nivel',
-          separator: ' / ',
-          bayPadding: '0',
-          levelPadding: '0',
-          invertLevels: false,
+          rackName: '01',
+          bayNumber: '001',
+          levelNumber: '01',
         },
       };
 
       const root = document.getElementById('root');
+
+      if (appState.inspections.length > 0) saveInspections();
 
       function escapeHtml(value) {
         return String(value)
@@ -893,22 +1281,82 @@
           .replaceAll("'", '&#039;');
       }
 
+      function renderSavedInspectionCard(inspection) {
+        const config = inspection.config || inspection.rackConfig || {};
+        const form = inspection.form || {};
+        const companyName = inspection.companyName || config.companyName || form.companyName || 'Empresa sin nombre';
+        const rackArea = inspection.rackArea || config.rackArea || form.rackArea || 'Area sin capturar';
+        const rackNumber = inspection.rackNumber || config.rackNumber || form.rackNumber || 'Sin rack';
+        const rackType = inspection.rackType || config.rackType || form.rackType || 'Tipo pendiente';
+        const updatedAt = inspection.updatedAt
+          ? new Date(inspection.updatedAt).toLocaleDateString('es-MX')
+          : 'Sin fecha';
+
+        return `
+          <article class="saved-inspection-card">
+            <div>
+              <span>${escapeHtml(companyName)}</span>
+              <h3>Rack ${escapeHtml(rackNumber)}</h3>
+              <p>${escapeHtml(rackArea)} / ${escapeHtml(rackType)}</p>
+              <small>Actualizada: ${escapeHtml(updatedAt)}</small>
+            </div>
+            <div class="saved-inspection-actions">
+              <button class="secondary-action" type="button" data-action="open-inspection" data-inspection-id="${escapeHtml(inspection.id)}">Abrir</button>
+              <button class="ghost-action" type="button" data-action="delete-inspection" data-inspection-id="${escapeHtml(inspection.id)}">Borrar</button>
+            </div>
+          </article>
+        `;
+      }
+
+      function renderSavedInspectionsMenu() {
+        return `
+          <aside class="saved-drawer" aria-label="Archivo de inspecciones">
+            <button class="menu-toggle" type="button" data-action="toggle-saved-panel" aria-label="Abrir archivo">
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+            ${appState.savedPanelOpen ? `
+              <div class="saved-drawer-panel">
+                <div class="saved-inspections-header">
+                  <p class="eyebrow">Archivo local</p>
+                  <h2>Inspecciones guardadas</h2>
+                </div>
+                ${
+                  appState.inspections.length > 0
+                    ? `<div class="saved-inspections-list">${appState.inspections.map(renderSavedInspectionCard).join('')}</div>`
+                    : '<p class="empty-saved-message">No hay inspecciones guardadas todavia.</p>'
+                }
+              </div>
+            ` : ''}
+          </aside>
+        `;
+      }
+
       function renderHome() {
         root.innerHTML = `
+          ${renderSavedInspectionsMenu()}
           <section class="home-view" data-screen="home">
+            <div class="hero-brand" aria-label="FMC Industrial">
+              <img src="logo.png" alt="FMC Industrial">
+            </div>
             <div class="home-copy">
-              <p class="eyebrow">Inspeccion industrial</p>
-              <h1>Racks configurables para inspecciones en campo</h1>
+              <p class="eyebrow">FMC Industrial</p>
+              <h1>Inspeccion de racks industriales</h1>
               <p>Crea la estructura del rack antes de revisarlo y trabaja con una cuadricula visual adaptada a cada empresa, area y numero de rack.</p>
             </div>
-            <button class="primary-action" type="button" data-action="new-inspection">Nueva inspeccion</button>
+            <div class="home-actions">
+              <button class="primary-action" type="button" data-action="new-inspection">Nueva inspeccion</button>
+            </div>
           </section>
         `;
       }
 
       function renderConfiguration() {
+        const config = appState.config || {};
         root.innerHTML = `
-          <section class="workspace-view">
+          ${renderSavedInspectionsMenu()}
+          <section class="workspace-view" data-screen="configuration">
             <header class="section-header">
               <div>
                 <p class="eyebrow">Primer paso</p>
@@ -917,24 +1365,21 @@
               <button class="secondary-action" type="button" data-action="home">Volver</button>
             </header>
             <form class="configuration-form" data-form="rack-config">
-              <label><span>Nombre de la empresa</span><input name="companyName" placeholder="Ej. Manufacturas Norte" required></label>
-              <label><span>Area o ubicacion del rack</span><input name="rackArea" placeholder="Ej. Almacen A - Pasillo 3" required></label>
-              <label><span>Numero de rack</span><input name="rackNumber" placeholder="Ej. R-014" required></label>
+              <label><span>Nombre de la empresa</span><input name="companyName" value="${escapeHtml(config.companyName || '')}" placeholder="Ej. Manufacturas Norte" required></label>
+              <label><span>Area o ubicacion del rack</span><input name="rackArea" value="${escapeHtml(config.rackArea || '')}" placeholder="Ej. Almacen A - Pasillo 3" required></label>
+              <label><span>Numero de rack</span><input name="rackNumber" value="${escapeHtml(config.rackNumber || '')}" placeholder="Ej. R-014" required></label>
               <label>
                 <span>Tipo de rack</span>
                 <select name="rackType" required>
                   <option value="">Seleccionar tipo</option>
-                  <option>Selectivo</option>
-                  <option>Drive-in</option>
-                  <option>Push-back</option>
-                  <option>Cantilever</option>
-                  <option>Dinamico</option>
-                  <option>Otro</option>
+                  ${['Selectivo', 'Drive-in', 'Push-back', 'Cantilever', 'Dinamico', 'Otro'].map((rackType) => (
+                    `<option${config.rackType === rackType ? ' selected' : ''}>${rackType}</option>`
+                  )).join('')}
                 </select>
               </label>
-              <label><span>Cantidad de bahias</span><input name="bays" type="number" min="1" max="30" value="4" required></label>
-              <label><span>Cantidad de niveles</span><input name="levels" type="number" min="1" max="20" value="3" required></label>
-              <label class="full-width"><span>Observaciones generales</span><textarea name="observations" rows="4" placeholder="Condiciones generales, referencias del area o notas iniciales."></textarea></label>
+              <label><span>Cantidad de bahias</span><input name="bays" type="number" min="1" max="30" value="${escapeHtml(config.bays || 4)}" required></label>
+              <label><span>Cantidad de niveles</span><input name="levels" type="number" min="1" max="20" value="${escapeHtml(config.levels || 3)}" required></label>
+              <label class="full-width"><span>Observaciones generales</span><textarea name="observations" rows="4" placeholder="Condiciones generales, referencias del area o notas iniciales.">${escapeHtml(config.observations || '')}</textarea></label>
               <div class="form-actions"><button class="primary-action" type="submit">Guardar configuracion</button></div>
             </form>
           </section>
@@ -955,12 +1400,13 @@
             const freeClass = detail.status === 'free' ? ' free-space' : '';
             const findingClass = detail.finding ? ' has-finding' : '';
             const locationName = detail.locationName || `Bahia ${bay}`;
+            const findingLabel = detail.finding || 'Sin hallazgo';
+            const damageLevel = damageLevels.find((levelItem) => levelItem.value === detail.damageLevel);
             cells.push(`
               <button class="rack-cell${selectedClass}${freeClass}${findingClass}" type="button" data-cell="${id}" data-bay="${bay}" data-level="${level}">
                 <strong>${escapeHtml(locationName)}</strong>
-                <span>Nivel ${level}</span>
-                ${detail.status === 'free' ? '<em>Espacio libre</em>' : ''}
-                ${detail.finding ? '<em>Con hallazgo</em>' : ''}
+                ${damageLevel && detail.damageLevel !== 'none' ? `<em class="damage-badge ${detail.damageLevel}">${escapeHtml(damageLevel.label)}</em>` : ''}
+                <span>${escapeHtml(findingLabel)}</span>
               </button>
             `);
           }
@@ -976,13 +1422,14 @@
             ...position,
             detail: appState.cellDetails[position.id] || {},
           }))
-          .filter((position) => position.detail.status === 'free' || position.detail.finding);
+          .filter((position) => position.detail.status === 'free' || position.detail.finding || position.detail.photo);
         const findingCount = reportItems.filter((position) => position.detail.finding).length;
         const freeSpaceCount = reportItems.filter((position) => position.detail.status === 'free').length;
         const report = renderReportPreview(positions, reportItems, findingCount, freeSpaceCount);
 
         root.innerHTML = `
-          <section class="workspace-view">
+          ${renderSavedInspectionsMenu()}
+          <section class="workspace-view" data-screen="rack">
             <header class="section-header">
               <div>
                 <p class="eyebrow">Rack generado</p>
@@ -1003,8 +1450,18 @@
               <div class="summary-item"><span>Seleccion</span><strong>${escapeHtml(selectedLabel)}</strong></div>
             </div>
             ${bulkRenamePanel}
+            <div class="rack-visual-toolbar">
+              <div>
+                <p class="eyebrow">Vista del rack</p>
+                <h2>Cuadricula de inspeccion</h2>
+              </div>
+              <div class="rack-visual-actions">
+                ${appState.saveMessage ? `<span class="save-message">${escapeHtml(appState.saveMessage)}</span>` : ''}
+                <button class="primary-action" type="button" data-action="save-current">Guardar inspeccion</button>
+              </div>
+            </div>
             <div class="rack-board-wrapper">
-              <div class="rack-board" style="grid-template-columns: repeat(${config.bays}, minmax(112px, 1fr));">${cells.join('')}</div>
+              <div class="rack-board" style="grid-template-columns: repeat(${config.bays}, minmax(96px, 1fr));">${cells.join('')}</div>
             </div>
             ${editor}
             ${config.observations ? `<aside class="notes-panel"><h2>Observaciones generales</h2><p>${escapeHtml(config.observations)}</p></aside>` : ''}
@@ -1022,26 +1479,13 @@
         `;
       }
 
-      function formatLocationNumber(value, padding) {
-        const size = Number(padding);
-        return size > 0 ? String(value).padStart(size, '0') : String(value);
-      }
-
       function buildBulkLocationName(position, positions, settings) {
-        const bay = formatLocationNumber(position.bay, settings.bayPadding);
-        const maxLevel = Math.max(...positions.map((currentPosition) => currentPosition.level));
-        const levelValue = settings.invertLevels ? maxLevel - position.level + 1 : position.level;
-        const level = formatLocationNumber(levelValue, settings.levelPadding);
-
-        if (settings.pattern === 'level-bay') {
-          return `${settings.levelPrefix} ${level}${settings.separator}${settings.bayPrefix} ${bay}`;
-        }
-
-        if (settings.pattern === 'compact') {
-          return `${settings.bayPrefix}${bay}-${settings.levelPrefix}${level}`;
-        }
-
-        return `${settings.bayPrefix} ${bay}${settings.separator}${settings.levelPrefix} ${level}`;
+        const rackName = String(settings.rackName || appState.config?.rackNumber || '01').trim();
+        const baySize = Math.max(1, String(settings.bayNumber || '001').length);
+        const levelSize = Math.max(1, String(settings.levelNumber || '01').length);
+        const bay = String(position.bay).padStart(baySize, '0');
+        const level = String(position.level).padStart(levelSize, '0');
+        return `${rackName}-${bay}-${level}`;
       }
 
       function renderBulkRenamePanel(positions) {
@@ -1062,37 +1506,9 @@
             </div>
 
             <div class="bulk-rename-grid">
-              <label>
-                <span>Formato</span>
-                <select name="pattern">
-                  <option value="bay-level"${settings.pattern === 'bay-level' ? ' selected' : ''}>Bahia / Nivel</option>
-                  <option value="level-bay"${settings.pattern === 'level-bay' ? ' selected' : ''}>Nivel / Bahia</option>
-                  <option value="compact"${settings.pattern === 'compact' ? ' selected' : ''}>Compacto</option>
-                </select>
-              </label>
-              <label><span>Nombre de bahia</span><input name="bayPrefix" value="${escapeHtml(settings.bayPrefix)}"></label>
-              <label><span>Nombre de nivel</span><input name="levelPrefix" value="${escapeHtml(settings.levelPrefix)}"></label>
-              <label><span>Separador</span><input name="separator" value="${escapeHtml(settings.separator)}"></label>
-              <label>
-                <span>Ceros en bahia</span>
-                <select name="bayPadding">
-                  <option value="0"${settings.bayPadding === '0' ? ' selected' : ''}>Sin ceros</option>
-                  <option value="2"${settings.bayPadding === '2' ? ' selected' : ''}>01, 02, 03</option>
-                  <option value="3"${settings.bayPadding === '3' ? ' selected' : ''}>001, 002, 003</option>
-                </select>
-              </label>
-              <label>
-                <span>Ceros en nivel</span>
-                <select name="levelPadding">
-                  <option value="0"${settings.levelPadding === '0' ? ' selected' : ''}>Sin ceros</option>
-                  <option value="2"${settings.levelPadding === '2' ? ' selected' : ''}>01, 02, 03</option>
-                  <option value="3"${settings.levelPadding === '3' ? ' selected' : ''}>001, 002, 003</option>
-                </select>
-              </label>
-              <label class="checkbox-field">
-                <input name="invertLevels" type="checkbox"${settings.invertLevels ? ' checked' : ''}>
-                <span>Invertir numeracion de niveles</span>
-              </label>
+              <label><span>Nombre del rack</span><input name="rackName" value="${escapeHtml(settings.rackName || appState.config?.rackNumber || '01')}"></label>
+              <label><span>Bahia</span><input name="bayNumber" value="${escapeHtml(settings.bayNumber || '001')}"></label>
+              <label><span>Nivel</span><input name="levelNumber" value="${escapeHtml(settings.levelNumber || '01')}"></label>
             </div>
 
             <div class="bulk-preview">
@@ -1136,7 +1552,9 @@
                 <td>${position.bay}</td>
                 <td>${position.level}</td>
                 <td>${escapeHtml(type)}</td>
+                <td>${escapeHtml(damageLevels.find((levelItem) => levelItem.value === position.detail.damageLevel)?.label || 'Sin dano')}</td>
                 <td>${escapeHtml(finding)}</td>
+                <td>${position.detail.photo ? `<img class="report-photo" src="${position.detail.photo}" alt="Evidencia">` : 'Sin foto'}</td>
               </tr>
             `;
           })
@@ -1214,7 +1632,9 @@
                           <th>Bahia</th>
                           <th>Nivel</th>
                           <th>Tipo</th>
+                          <th>Nivel de dano</th>
                           <th>Hallazgo / observacion</th>
+                          <th>Foto</th>
                         </tr>
                       </thead>
                       <tbody>${detailRows}</tbody>
@@ -1250,80 +1670,186 @@
         const bay = cellId.match(/B(\d+)/)[1];
         const level = cellId.match(/N(\d+)/)[1];
         const detail = appState.cellDetails[cellId] || {};
+        const photo = appState.draftPhotos[cellId] || detail.photo || '';
 
         return `
-          <form class="cell-editor" data-form="cell-editor" data-cell-id="${cellId}">
-            <div>
-              <p class="eyebrow">Posicion seleccionada</p>
-              <h2>Bahia ${bay} / Nivel ${level}</h2>
-            </div>
-            <label>
-              <span>Nombre de ubicacion</span>
-              <input name="locationName" value="${escapeHtml(detail.locationName || '')}" placeholder="Bahia ${bay} / Nivel ${level}">
-            </label>
-            <label>
-              <span>Tipo de posicion</span>
-              <select name="status">
-                <option value="normal"${detail.status !== 'free' ? ' selected' : ''}>Posicion normal</option>
-                <option value="free"${detail.status === 'free' ? ' selected' : ''}>Espacio libre / puente</option>
-              </select>
-            </label>
-            <label class="full-width">
-              <span>Hallazgo</span>
-              <textarea name="finding" rows="4" placeholder="Describe golpe, deformacion, falta de anclaje, corrosion u otro hallazgo.">${escapeHtml(detail.finding || '')}</textarea>
-            </label>
-            <div class="form-actions">
-              <button class="primary-action" type="submit">Guardar posicion</button>
-            </div>
-          </form>
+          <div class="modal-backdrop" role="presentation">
+            <form class="cell-editor modal-panel" data-form="cell-editor" data-cell-id="${cellId}">
+              <div class="modal-header">
+                <div>
+                  <p class="eyebrow">Posicion seleccionada</p>
+                  <h2>Bahia ${bay} / Nivel ${level}</h2>
+                </div>
+                <button class="icon-action" type="button" data-action="close-editor" aria-label="Cerrar">x</button>
+              </div>
+              <label>
+                <span>Nombre de ubicacion</span>
+                <input name="locationName" value="${escapeHtml(detail.locationName || '')}" placeholder="Bahia ${bay} / Nivel ${level}">
+              </label>
+              <label>
+                <span>Tipo de posicion</span>
+                <select name="status">
+                  <option value="normal"${detail.status !== 'free' ? ' selected' : ''}>Posicion normal</option>
+                  <option value="free"${detail.status === 'free' ? ' selected' : ''}>Espacio libre / puente</option>
+                </select>
+              </label>
+              <label>
+                <span>Nivel de dano</span>
+                <select name="damageLevel">
+                  ${damageLevels.map((levelItem) => (
+                    `<option value="${levelItem.value}"${(detail.damageLevel || 'none') === levelItem.value ? ' selected' : ''}>${levelItem.label}</option>`
+                  )).join('')}
+                </select>
+              </label>
+              <label class="full-width">
+                <span>Hallazgo</span>
+                <textarea name="finding" rows="4" placeholder="Describe golpe, deformacion, falta de anclaje, corrosion u otro hallazgo.">${escapeHtml(detail.finding || '')}</textarea>
+              </label>
+              <label class="full-width">
+                <span>Foto</span>
+                <input data-photo-input="${cellId}" type="file" accept="image/*">
+              </label>
+              ${photo ? `
+                <div class="photo-preview full-width">
+                  <img src="${photo}" alt="Vista previa">
+                  <button class="secondary-action" type="button" data-action="remove-photo" data-cell-id="${cellId}">Quitar foto</button>
+                </div>
+              ` : ''}
+              <div class="form-actions">
+                <button class="secondary-action" type="button" data-action="close-editor">Cancelar</button>
+                <button class="primary-action" type="submit">Guardar posicion</button>
+              </div>
+            </form>
+          </div>
         `;
       }
 
       root.addEventListener('click', (event) => {
         const action = event.target.closest('[data-action]')?.dataset.action;
+        const inspectionId = event.target.closest('[data-inspection-id]')?.dataset.inspectionId;
         const cell = event.target.closest('[data-cell]');
 
+        if (action === 'toggle-saved-panel') {
+          const currentScreen = root.querySelector('[data-screen]')?.dataset.screen;
+          appState.savedPanelOpen = !appState.savedPanelOpen;
+          if (currentScreen === 'rack' && appState.config) renderRack();
+          else if (currentScreen === 'configuration') renderConfiguration();
+          else renderHome();
+        }
+
         if (action === 'new-inspection') {
+          appState.activeInspectionId = createInspectionId();
+          appState.savedPanelOpen = false;
           appState.config = null;
           appState.selectedCell = null;
           appState.cellDetails = {};
           appState.bulkRename = {
-            pattern: 'bay-level',
-            bayPrefix: 'Bahia',
-            levelPrefix: 'Nivel',
-            separator: ' / ',
-            bayPadding: '0',
-            levelPadding: '0',
-            invertLevels: false,
+            rackName: '01',
+            bayNumber: '001',
+            levelNumber: '01',
           };
           renderConfiguration();
         }
 
         if (action === 'home') renderHome();
         if (action === 'configure') renderConfiguration();
+
+        if (action === 'open-inspection' && inspectionId) {
+          const inspection = appState.inspections.find((currentInspection) => (
+            currentInspection.id === inspectionId
+          ));
+
+          if (inspection) {
+            appState.activeInspectionId = inspection.id;
+            appState.savedPanelOpen = false;
+            appState.config = inspection.config || inspection.rackConfig || null;
+            appState.selectedCell = inspection.selectedCell || null;
+            appState.cellDetails = inspection.cellDetails || {};
+            appState.bulkRename = inspection.bulkRename || {
+              rackName: appState.config?.rackNumber || '01',
+              bayNumber: '001',
+              levelNumber: '01',
+            };
+
+            if (appState.config) renderRack();
+            else renderConfiguration();
+          }
+        }
+
+        if (action === 'delete-inspection' && inspectionId) {
+          appState.inspections = appState.inspections.filter((inspection) => (
+            inspection.id !== inspectionId
+          ));
+          saveInspections();
+
+          if (appState.activeInspectionId === inspectionId) {
+            appState.activeInspectionId = null;
+            appState.config = null;
+            appState.selectedCell = null;
+            appState.cellDetails = {};
+          }
+
+          renderHome();
+        }
+        if (action === 'save-current') {
+          if (!appState.activeInspectionId) appState.activeInspectionId = createInspectionId();
+          saveCurrentInspection();
+          appState.saveMessage = 'Guardado';
+          renderRack();
+          window.setTimeout(() => {
+            appState.saveMessage = '';
+            if (root.querySelector('[data-screen="rack"]')) renderRack();
+          }, 1800);
+        }
+        if (action === 'close-editor') {
+          appState.selectedCell = null;
+          renderRack();
+        }
+        if (action === 'remove-photo') {
+          const cellId = event.target.closest('[data-cell-id]')?.dataset.cellId || appState.selectedCell;
+          delete appState.draftPhotos[cellId];
+          appState.cellDetails[cellId] = {
+            ...(appState.cellDetails[cellId] || {}),
+            photo: '',
+          };
+          saveCurrentInspection();
+          renderRack();
+        }
         if (action === 'print-report') window.print();
 
         if (cell) {
           appState.selectedCell = cell.dataset.cell;
+          saveCurrentInspection();
           renderRack();
         }
       });
 
       root.addEventListener('change', (event) => {
+        if (event.target.matches('[data-photo-input]')) {
+          const cellId = event.target.dataset.photoInput;
+          const file = event.target.files?.[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = () => {
+            appState.draftPhotos[cellId] = String(reader.result);
+            renderRack();
+          };
+          reader.readAsDataURL(file);
+          return;
+        }
+
         if (!event.target.closest('[data-form="bulk-rename"]')) return;
         const form = event.target.closest('[data-form="bulk-rename"]');
         const formData = new FormData(form);
 
         appState.bulkRename = {
-          pattern: String(formData.get('pattern')),
-          bayPrefix: String(formData.get('bayPrefix')),
-          levelPrefix: String(formData.get('levelPrefix')),
-          separator: String(formData.get('separator')),
-          bayPadding: String(formData.get('bayPadding')),
-          levelPadding: String(formData.get('levelPadding')),
-          invertLevels: Boolean(formData.get('invertLevels')),
+          rackName: String(formData.get('rackName')),
+          bayNumber: String(formData.get('bayNumber')),
+          levelNumber: String(formData.get('levelNumber')),
         };
 
+        saveCurrentInspection();
         renderRack();
       });
 
@@ -1332,6 +1858,8 @@
         event.preventDefault();
 
         const formData = new FormData(event.target);
+        if (!appState.activeInspectionId) appState.activeInspectionId = createInspectionId();
+
         appState.config = {
           companyName: String(formData.get('companyName')).trim(),
           rackArea: String(formData.get('rackArea')).trim(),
@@ -1343,6 +1871,7 @@
         };
         appState.selectedCell = null;
         appState.cellDetails = {};
+        saveCurrentInspection();
         renderRack();
       });
 
@@ -1356,9 +1885,14 @@
         appState.cellDetails[cellId] = {
           locationName: String(formData.get('locationName')).trim(),
           status: String(formData.get('status')),
+          damageLevel: String(formData.get('damageLevel') || 'none'),
           finding: String(formData.get('finding')).trim(),
+          photo: appState.draftPhotos[cellId] || appState.cellDetails[cellId]?.photo || '',
         };
 
+        delete appState.draftPhotos[cellId];
+        appState.selectedCell = null;
+        saveCurrentInspection();
         renderRack();
       });
 
@@ -1368,13 +1902,9 @@
 
         const formData = new FormData(event.target);
         appState.bulkRename = {
-          pattern: String(formData.get('pattern')),
-          bayPrefix: String(formData.get('bayPrefix')),
-          levelPrefix: String(formData.get('levelPrefix')),
-          separator: String(formData.get('separator')),
-          bayPadding: String(formData.get('bayPadding')),
-          levelPadding: String(formData.get('levelPadding')),
-          invertLevels: Boolean(formData.get('invertLevels')),
+          rackName: String(formData.get('rackName')),
+          bayNumber: String(formData.get('bayNumber')),
+          levelNumber: String(formData.get('levelNumber')),
         };
 
         const positions = [];
@@ -1391,8 +1921,11 @@
           };
         });
 
+        saveCurrentInspection();
         renderRack();
       });
+
+      renderHome();
     </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>

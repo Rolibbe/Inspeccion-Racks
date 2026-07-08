@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const rackTypes = [
   'Selectivo',
@@ -7,6 +7,14 @@ const rackTypes = [
   'Cantilever',
   'Dinamico',
   'Otro',
+];
+
+const damageLevels = [
+  { value: 'none', label: 'Sin dano' },
+  { value: 'leve', label: 'Leve' },
+  { value: 'moderado', label: 'Moderado' },
+  { value: 'grave', label: 'Grave' },
+  { value: 'critico', label: 'Critico' },
 ];
 
 const initialForm = {
@@ -19,12 +27,94 @@ const initialForm = {
   observations: '',
 };
 
+const storageKey = 'fmcRackInspections.v1';
+const legacyStorageKey = 'fmcRackInspection.current';
+
+function createInspectionId() {
+  return `inspection-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function loadSavedInspections() {
+  try {
+    const savedInspections = localStorage.getItem(storageKey);
+    if (savedInspections) {
+      return JSON.parse(savedInspections).map((inspection) => ({
+        ...inspection,
+        rackConfig: inspection.rackConfig || inspection.config || null,
+      }));
+    }
+
+    const legacyInspection = localStorage.getItem(legacyStorageKey);
+    if (!legacyInspection) return [];
+
+    const parsedInspection = JSON.parse(legacyInspection);
+
+    return [{
+      ...parsedInspection,
+      id: createInspectionId(),
+      rackConfig: parsedInspection.rackConfig || parsedInspection.config || null,
+      updatedAt: parsedInspection.savedAt || new Date().toISOString(),
+    }];
+  } catch {
+    return [];
+  }
+}
+
+function hasFormData(form) {
+  return Object.entries(form).some(([key, value]) => value !== initialForm[key]);
+}
+
 function App() {
+  const initialSavedInspections = useMemo(loadSavedInspections, []);
+  const [savedInspections, setSavedInspections] = useState(initialSavedInspections);
+  const [activeInspectionId, setActiveInspectionId] = useState(null);
+  const [isSavedPanelOpen, setIsSavedPanelOpen] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
   const [screen, setScreen] = useState('home');
   const [form, setForm] = useState(initialForm);
   const [rackConfig, setRackConfig] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
   const [cellDetails, setCellDetails] = useState({});
+
+  const hasActiveWork = Boolean(
+    rackConfig || Object.keys(cellDetails).length > 0 || hasFormData(form)
+  );
+
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(savedInspections));
+  }, [savedInspections]);
+
+  useEffect(() => {
+    if (!activeInspectionId || !hasActiveWork) return;
+
+    const updatedAt = new Date().toISOString();
+    const nextSavedInspection = {
+      id: activeInspectionId,
+      form,
+      rackConfig,
+      selectedCell,
+      cellDetails,
+      companyName: rackConfig?.companyName || form.companyName,
+      rackArea: rackConfig?.rackArea || form.rackArea,
+      rackNumber: rackConfig?.rackNumber || form.rackNumber,
+      rackType: rackConfig?.rackType || form.rackType,
+      updatedAt,
+    };
+
+    setSavedInspections((currentInspections) => {
+      const existingIndex = currentInspections.findIndex(
+        (inspection) => inspection.id === activeInspectionId
+      );
+
+      if (existingIndex === -1) return [nextSavedInspection, ...currentInspections];
+
+      const updatedInspections = [...currentInspections];
+      updatedInspections[existingIndex] = nextSavedInspection;
+      return updatedInspections.sort((first, second) =>
+        (second.updatedAt || '').localeCompare(first.updatedAt || '')
+      );
+    });
+  }, [activeInspectionId, form, rackConfig, selectedCell, cellDetails, hasActiveWork]);
 
   const rackPositions = useMemo(() => {
     if (!rackConfig) return [];
@@ -49,11 +139,48 @@ function App() {
   }
 
   function handleNewInspection() {
+    setActiveInspectionId(createInspectionId());
     setScreen('configuration');
     setForm(initialForm);
     setRackConfig(null);
     setSelectedCell(null);
     setCellDetails({});
+  }
+
+  function handleOpenInspection(inspectionId) {
+    const inspection = savedInspections.find((currentInspection) => (
+      currentInspection.id === inspectionId
+    ));
+    if (!inspection) return;
+
+    setActiveInspectionId(inspection.id);
+    setIsSavedPanelOpen(false);
+    setForm(inspection.form || initialForm);
+    setRackConfig(inspection.rackConfig || inspection.config || null);
+    setSelectedCell(inspection.selectedCell || null);
+    setCellDetails(inspection.cellDetails || {});
+    setScreen(inspection.rackConfig ? 'rack' : 'configuration');
+  }
+
+  function handleDeleteInspection(inspectionId) {
+    setSavedInspections((currentInspections) => (
+      currentInspections.filter((inspection) => inspection.id !== inspectionId)
+    ));
+
+    if (activeInspectionId === inspectionId) {
+      setActiveInspectionId(null);
+      setScreen('home');
+      setForm(initialForm);
+      setRackConfig(null);
+      setSelectedCell(null);
+      setCellDetails({});
+    }
+  }
+
+  function handleSaveInspection() {
+    if (!activeInspectionId) setActiveInspectionId(createInspectionId());
+    setSaveMessage('Guardado');
+    window.setTimeout(() => setSaveMessage(''), 1800);
   }
 
   function handleSubmit(event) {
@@ -104,7 +231,19 @@ function App() {
 
   return (
     <main className="app-shell">
-      {screen === 'home' && <HomeScreen onNewInspection={handleNewInspection} />}
+      <SavedInspectionsMenu
+        isOpen={isSavedPanelOpen}
+        inspections={savedInspections}
+        onToggle={() => setIsSavedPanelOpen((isOpen) => !isOpen)}
+        onOpenInspection={handleOpenInspection}
+        onDeleteInspection={handleDeleteInspection}
+      />
+
+      {screen === 'home' && (
+        <HomeScreen
+          onNewInspection={handleNewInspection}
+        />
+      )}
 
       {screen === 'configuration' && (
         <ConfigurationScreen
@@ -127,6 +266,8 @@ function App() {
           onEdit={() => setScreen('configuration')}
           onNewInspection={handleNewInspection}
           onPrint={() => window.print()}
+          onSaveInspection={handleSaveInspection}
+          saveMessage={saveMessage}
         />
       )}
     </main>
@@ -136,19 +277,97 @@ function App() {
 function HomeScreen({ onNewInspection }) {
   return (
     <section className="home-view">
+      <div className="hero-brand" aria-label="FMC Industrial">
+        <img src="logo.png" alt="FMC Industrial" />
+      </div>
+
       <div className="home-copy">
-        <p className="eyebrow">Inspeccion industrial</p>
-        <h1>Racks configurables para inspecciones en campo</h1>
+        <p className="eyebrow">FMC Industrial</p>
+        <h1>Inspeccion de racks industriales</h1>
         <p>
           Crea la estructura del rack antes de revisarlo y trabaja con una
           cuadricula visual adaptada a cada empresa, area y numero de rack.
         </p>
       </div>
 
-      <button className="primary-action" type="button" onClick={onNewInspection}>
-        Nueva inspeccion
-      </button>
+      <div className="home-actions">
+        <button className="primary-action" type="button" onClick={onNewInspection}>
+          Nueva inspeccion
+        </button>
+      </div>
     </section>
+  );
+}
+
+function SavedInspectionsMenu({
+  isOpen,
+  inspections,
+  onToggle,
+  onOpenInspection,
+  onDeleteInspection,
+}) {
+  return (
+    <aside className={`saved-drawer ${isOpen ? 'open' : ''}`} aria-label="Archivo de inspecciones">
+      <button className="menu-toggle" type="button" onClick={onToggle} aria-label="Abrir archivo">
+        <span />
+        <span />
+        <span />
+      </button>
+
+      {isOpen && (
+        <div className="saved-drawer-panel">
+          <div className="saved-inspections-header">
+            <p className="eyebrow">Archivo local</p>
+            <h2>Inspecciones guardadas</h2>
+          </div>
+
+          {inspections.length > 0 ? (
+            <div className="saved-inspections-list">
+              {inspections.map((inspection) => (
+                <SavedInspectionCard
+                  inspection={inspection}
+                  key={inspection.id}
+                  onOpen={() => onOpenInspection(inspection.id)}
+                  onDelete={() => onDeleteInspection(inspection.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="empty-saved-message">No hay inspecciones guardadas todavia.</p>
+          )}
+        </div>
+      )}
+    </aside>
+  );
+}
+
+function SavedInspectionCard({ inspection, onOpen, onDelete }) {
+  const config = inspection.rackConfig || inspection.config || {};
+  const companyName = inspection.companyName || config.companyName || inspection.form?.companyName || 'Empresa sin nombre';
+  const rackArea = inspection.rackArea || config.rackArea || inspection.form?.rackArea || 'Area sin capturar';
+  const rackNumber = inspection.rackNumber || config.rackNumber || inspection.form?.rackNumber || 'Sin rack';
+  const rackType = inspection.rackType || config.rackType || inspection.form?.rackType || 'Tipo pendiente';
+  const updatedAt = inspection.updatedAt
+    ? new Date(inspection.updatedAt).toLocaleDateString('es-MX')
+    : 'Sin fecha';
+
+  return (
+    <article className="saved-inspection-card">
+      <div>
+        <span>{companyName}</span>
+        <h3>Rack {rackNumber}</h3>
+        <p>{rackArea} / {rackType}</p>
+        <small>Actualizada: {updatedAt}</small>
+      </div>
+      <div className="saved-inspection-actions">
+        <button className="secondary-action" type="button" onClick={onOpen}>
+          Abrir
+        </button>
+        <button className="ghost-action" type="button" onClick={onDelete}>
+          Borrar
+        </button>
+      </div>
+    </article>
   );
 }
 
@@ -269,6 +488,8 @@ function RackScreen({
   onEdit,
   onNewInspection,
   onPrint,
+  onSaveInspection,
+  saveMessage,
 }) {
   const selectedDetail = selectedCell ? cellDetails[selectedCell.id] : null;
   const flatPositions = positions.flat();
@@ -277,7 +498,7 @@ function RackScreen({
       ...position,
       detail: cellDetails[position.id] || {},
     }))
-    .filter((position) => position.detail.status === 'free' || position.detail.finding);
+    .filter((position) => position.detail.status === 'free' || position.detail.finding || position.detail.photo);
   const freeSpaceCount = reportItems.filter((position) => position.detail.status === 'free').length;
   const findingCount = reportItems.filter((position) => position.detail.finding).length;
 
@@ -319,12 +540,25 @@ function RackScreen({
         />
       </div>
 
-      <BulkRenamePanel positions={flatPositions} onApply={onBulkRename} />
+      <BulkRenamePanel config={config} positions={flatPositions} onApply={onBulkRename} />
+
+      <div className="rack-visual-toolbar">
+        <div>
+          <p className="eyebrow">Vista del rack</p>
+          <h2>Cuadricula de inspeccion</h2>
+        </div>
+        <div className="rack-visual-actions">
+          {saveMessage && <span className="save-message">{saveMessage}</span>}
+          <button className="primary-action" type="button" onClick={onSaveInspection}>
+            Guardar inspeccion
+          </button>
+        </div>
+      </div>
 
       <div className="rack-board-wrapper" aria-label="Cuadricula del rack">
         <div
           className="rack-board"
-          style={{ gridTemplateColumns: `repeat(${config.bays}, minmax(112px, 1fr))` }}
+          style={{ gridTemplateColumns: `repeat(${config.bays}, minmax(96px, 1fr))` }}
         >
           {positions
             .slice()
@@ -336,6 +570,8 @@ function RackScreen({
               const isFreeSpace = detail?.status === 'free';
               const hasFinding = Boolean(detail?.finding);
               const label = detail?.locationName || `Bahia ${position.bay}`;
+              const findingLabel = detail?.finding || 'Sin hallazgo';
+              const damageLabel = damageLevels.find((level) => level.value === detail?.damageLevel)?.label;
 
               return (
                 <button
@@ -351,9 +587,10 @@ function RackScreen({
                   aria-pressed={isSelected}
                 >
                   <strong>{label}</strong>
-                  <span>Nivel {position.level}</span>
-                  {isFreeSpace && <em>Espacio libre</em>}
-                  {hasFinding && <em>Con hallazgo</em>}
+                  {damageLabel && detail?.damageLevel !== 'none' && (
+                    <em className={`damage-badge ${detail.damageLevel}`}>{damageLabel}</em>
+                  )}
+                  <span>{findingLabel}</span>
                 </button>
               );
             })}
@@ -365,7 +602,11 @@ function RackScreen({
           key={selectedCell.id}
           cell={selectedCell}
           detail={selectedDetail}
-          onSave={(nextDetail) => onUpdateCell(selectedCell.id, nextDetail)}
+          onClose={() => onSelectCell(null)}
+          onSave={(nextDetail) => {
+            onUpdateCell(selectedCell.id, nextDetail);
+            onSelectCell(null);
+          }}
         />
       )}
 
@@ -494,7 +735,9 @@ function ReportPreview({
                 <th>Bahia</th>
                 <th>Nivel</th>
                 <th>Tipo</th>
+                <th>Nivel de dano</th>
                 <th>Hallazgo / observacion</th>
+                <th>Foto</th>
               </tr>
             </thead>
             <tbody>
@@ -504,7 +747,15 @@ function ReportPreview({
                   <td>{position.bay}</td>
                   <td>{position.level}</td>
                   <td>{position.detail.status === 'free' ? 'Espacio libre / puente' : 'Posicion normal'}</td>
+                  <td>{damageLevels.find((level) => level.value === position.detail.damageLevel)?.label || 'Sin dano'}</td>
                   <td>{position.detail.finding || 'Sin hallazgo registrado.'}</td>
+                  <td>
+                    {position.detail.photo ? (
+                      <img className="report-photo" src={position.detail.photo} alt="Evidencia" />
+                    ) : (
+                      'Sin foto'
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -537,49 +788,29 @@ function ReportMetric({ label, value, tone }) {
   );
 }
 
-function BulkRenamePanel({ positions, onApply }) {
+function BulkRenamePanel({ config, positions, onApply }) {
   const [settings, setSettings] = useState({
-    pattern: 'bay-level',
-    bayPrefix: 'Bahia',
-    levelPrefix: 'Nivel',
-    separator: ' / ',
-    bayPadding: 0,
-    levelPadding: 0,
-    invertLevels: false,
+    rackName: config.rackNumber || '01',
+    bayNumber: '001',
+    levelNumber: '01',
   });
 
   const previewPositions = positions.slice(0, 4);
 
   function handleChange(event) {
-    const { name, type, checked, value } = event.target;
+    const { name, value } = event.target;
 
     setSettings((currentSettings) => ({
       ...currentSettings,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: value,
     }));
   }
 
-  function formatNumber(value, padding) {
-    const size = Number(padding);
-    return size > 0 ? String(value).padStart(size, '0') : String(value);
-  }
-
   function buildName(position) {
-    const bay = formatNumber(position.bay, settings.bayPadding);
-    const levelValue = settings.invertLevels
-      ? Math.max(...positions.map((currentPosition) => currentPosition.level)) - position.level + 1
-      : position.level;
-    const level = formatNumber(levelValue, settings.levelPadding);
-
-    if (settings.pattern === 'level-bay') {
-      return `${settings.levelPrefix} ${level}${settings.separator}${settings.bayPrefix} ${bay}`;
-    }
-
-    if (settings.pattern === 'compact') {
-      return `${settings.bayPrefix}${bay}-${settings.levelPrefix}${level}`;
-    }
-
-    return `${settings.bayPrefix} ${bay}${settings.separator}${settings.levelPrefix} ${level}`;
+    const rackName = settings.rackName.trim() || '01';
+    const bay = String(position.bay).padStart(Math.max(1, settings.bayNumber.length), '0');
+    const level = String(position.level).padStart(Math.max(1, settings.levelNumber.length), '0');
+    return `${rackName}-${bay}-${level}`;
   }
 
   function handleSubmit(event) {
@@ -607,55 +838,18 @@ function BulkRenamePanel({ positions, onApply }) {
 
       <div className="bulk-rename-grid">
         <label>
-          <span>Formato</span>
-          <select name="pattern" value={settings.pattern} onChange={handleChange}>
-            <option value="bay-level">Bahia / Nivel</option>
-            <option value="level-bay">Nivel / Bahia</option>
-            <option value="compact">Compacto</option>
-          </select>
+          <span>Nombre del rack</span>
+          <input name="rackName" value={settings.rackName} onChange={handleChange} />
         </label>
 
         <label>
-          <span>Nombre de bahia</span>
-          <input name="bayPrefix" value={settings.bayPrefix} onChange={handleChange} />
+          <span>Bahia</span>
+          <input name="bayNumber" value={settings.bayNumber} onChange={handleChange} />
         </label>
 
         <label>
-          <span>Nombre de nivel</span>
-          <input name="levelPrefix" value={settings.levelPrefix} onChange={handleChange} />
-        </label>
-
-        <label>
-          <span>Separador</span>
-          <input name="separator" value={settings.separator} onChange={handleChange} />
-        </label>
-
-        <label>
-          <span>Ceros en bahia</span>
-          <select name="bayPadding" value={settings.bayPadding} onChange={handleChange}>
-            <option value="0">Sin ceros</option>
-            <option value="2">01, 02, 03</option>
-            <option value="3">001, 002, 003</option>
-          </select>
-        </label>
-
-        <label>
-          <span>Ceros en nivel</span>
-          <select name="levelPadding" value={settings.levelPadding} onChange={handleChange}>
-            <option value="0">Sin ceros</option>
-            <option value="2">01, 02, 03</option>
-            <option value="3">001, 002, 003</option>
-          </select>
-        </label>
-
-        <label className="checkbox-field">
-          <input
-            name="invertLevels"
-            type="checkbox"
-            checked={settings.invertLevels}
-            onChange={handleChange}
-          />
-          <span>Invertir numeracion de niveles</span>
+          <span>Nivel</span>
+          <input name="levelNumber" value={settings.levelNumber} onChange={handleChange} />
         </label>
       </div>
 
@@ -680,11 +874,13 @@ function ReportField({ label, value }) {
   );
 }
 
-function CellEditor({ cell, detail, onSave }) {
+function CellEditor({ cell, detail, onClose, onSave }) {
   const [draft, setDraft] = useState({
     locationName: detail?.locationName || '',
     status: detail?.status || 'normal',
+    damageLevel: detail?.damageLevel || 'none',
     finding: detail?.finding || '',
+    photo: detail?.photo || '',
   });
 
   function handleChange(event) {
@@ -701,52 +897,107 @@ function CellEditor({ cell, detail, onSave }) {
     onSave({
       locationName: draft.locationName.trim(),
       status: draft.status,
+      damageLevel: draft.damageLevel,
       finding: draft.finding.trim(),
+      photo: draft.photo,
     });
   }
 
+  function handlePhotoChange(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setDraft((currentDraft) => ({
+        ...currentDraft,
+        photo: String(reader.result),
+      }));
+    };
+    reader.readAsDataURL(file);
+  }
+
   return (
-    <form className="cell-editor" onSubmit={handleSubmit}>
-      <div>
-        <p className="eyebrow">Posicion seleccionada</p>
-        <h2>Bahia {cell.bay} / Nivel {cell.level}</h2>
-      </div>
+    <div className="modal-backdrop" role="presentation">
+      <form className="cell-editor modal-panel" onSubmit={handleSubmit}>
+        <div className="modal-header">
+          <div>
+            <p className="eyebrow">Posicion seleccionada</p>
+            <h2>Bahia {cell.bay} / Nivel {cell.level}</h2>
+          </div>
+          <button className="icon-action" type="button" onClick={onClose} aria-label="Cerrar">
+            x
+          </button>
+        </div>
 
-      <label>
-        <span>Nombre de ubicacion</span>
-        <input
-          name="locationName"
-          value={draft.locationName}
-          onChange={handleChange}
-          placeholder={`Bahia ${cell.bay} / Nivel ${cell.level}`}
-        />
-      </label>
+        <label>
+          <span>Nombre de ubicacion</span>
+          <input
+            name="locationName"
+            value={draft.locationName}
+            onChange={handleChange}
+            placeholder={`Bahia ${cell.bay} / Nivel ${cell.level}`}
+          />
+        </label>
 
-      <label>
-        <span>Tipo de posicion</span>
-        <select name="status" value={draft.status} onChange={handleChange}>
-          <option value="normal">Posicion normal</option>
-          <option value="free">Espacio libre / puente</option>
-        </select>
-      </label>
+        <label>
+          <span>Tipo de posicion</span>
+          <select name="status" value={draft.status} onChange={handleChange}>
+            <option value="normal">Posicion normal</option>
+            <option value="free">Espacio libre / puente</option>
+          </select>
+        </label>
 
-      <label className="full-width">
-        <span>Hallazgo</span>
-        <textarea
-          name="finding"
-          value={draft.finding}
-          onChange={handleChange}
-          rows="4"
-          placeholder="Describe golpe, deformacion, falta de anclaje, corrosion u otro hallazgo."
-        />
-      </label>
+        <label>
+          <span>Nivel de dano</span>
+          <select name="damageLevel" value={draft.damageLevel} onChange={handleChange}>
+            {damageLevels.map((level) => (
+              <option key={level.value} value={level.value}>
+                {level.label}
+              </option>
+            ))}
+          </select>
+        </label>
 
-      <div className="form-actions">
-        <button className="primary-action" type="submit">
-          Guardar posicion
-        </button>
-      </div>
-    </form>
+        <label className="full-width">
+          <span>Hallazgo</span>
+          <textarea
+            name="finding"
+            value={draft.finding}
+            onChange={handleChange}
+            rows="4"
+            placeholder="Describe golpe, deformacion, falta de anclaje, corrosion u otro hallazgo."
+          />
+        </label>
+
+        <label className="full-width">
+          <span>Foto</span>
+          <input type="file" accept="image/*" onChange={handlePhotoChange} />
+        </label>
+
+        {draft.photo && (
+          <div className="photo-preview full-width">
+            <img src={draft.photo} alt="Vista previa" />
+            <button
+              className="secondary-action"
+              type="button"
+              onClick={() => setDraft((currentDraft) => ({ ...currentDraft, photo: '' }))}
+            >
+              Quitar foto
+            </button>
+          </div>
+        )}
+
+        <div className="form-actions">
+          <button className="secondary-action" type="button" onClick={onClose}>
+            Cancelar
+          </button>
+          <button className="primary-action" type="submit">
+            Guardar posicion
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
