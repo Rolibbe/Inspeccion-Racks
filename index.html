@@ -397,6 +397,17 @@
         min-width: max-content;
       }
 
+      .rack-board.structure-mode .rack-cell {
+        border-color: #f2b84b;
+      }
+
+      .rack-cell-placeholder {
+        min-height: 74px;
+        border: 1px dashed rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
       .rack-cell {
         display: grid;
         align-content: center;
@@ -469,6 +480,75 @@
       .damage-badge.critico {
         background: #202a33;
         color: #ffffff;
+      }
+
+      .structure-editor {
+        display: grid;
+        gap: 14px;
+        padding: 16px;
+        border: 1px solid #dce4ea;
+        border-top: 0;
+        background: #ffffff;
+      }
+
+      .structure-editor-main {
+        display: grid;
+        grid-template-columns: 1fr 140px auto;
+        align-items: end;
+        gap: 14px;
+      }
+
+      .structure-editor-main h2 {
+        margin: 0;
+        color: #17202a;
+        font-size: 1.24rem;
+      }
+
+      .structure-actions,
+      .structure-range {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .structure-bay-strip {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+
+      .structure-bay-strip button {
+        min-width: 86px;
+        border: 1px solid #c8d3db;
+        border-radius: 8px;
+        padding: 9px 10px;
+        background: #fbfcfd;
+        color: #17202a;
+        font-weight: 850;
+        text-align: left;
+      }
+
+      .structure-bay-strip button.selected {
+        border-color: #2f8f83;
+        box-shadow: 0 0 0 3px rgba(47, 143, 131, 0.15);
+      }
+
+      .structure-bay-strip span {
+        display: block;
+        color: #667685;
+        font-size: 0.74rem;
+        font-weight: 750;
+      }
+
+      .structure-range {
+        align-items: end;
+        justify-content: flex-start;
+      }
+
+      .structure-range label {
+        width: 150px;
       }
 
       .modal-backdrop {
@@ -971,6 +1051,245 @@
         font-weight: 700;
       }
 
+      .report-page {
+        max-width: 216mm;
+        margin-inline: auto;
+        padding: 18mm 14mm;
+        background: #ffffff;
+        border: 1px solid #c8d3db;
+        border-radius: 0;
+        color: #111111;
+        font-family: Arial, Helvetica, sans-serif;
+        box-shadow: 0 18px 44px rgba(20, 30, 40, 0.14);
+      }
+
+      .report-header-table,
+      .report-info-table,
+      .report-summary-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+      }
+
+      .report-header-table td,
+      .report-info-table td,
+      .report-summary-table td {
+        border: 1px solid #202a33;
+        padding: 8px 10px;
+        vertical-align: middle;
+        overflow-wrap: anywhere;
+      }
+
+      .report-logo-cell {
+        width: 34mm;
+        text-align: center;
+        background: #f4f4f4;
+      }
+
+      .report-logo-cell img {
+        max-width: 30mm;
+        max-height: 20mm;
+        object-fit: contain;
+      }
+
+      .report-title-cell {
+        text-align: center;
+      }
+
+      .report-title-cell strong {
+        display: block;
+        color: #111111;
+        font-size: 1rem;
+        letter-spacing: 0.04em;
+      }
+
+      .report-title-cell span {
+        display: block;
+        margin-top: 4px;
+        color: #333333;
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+
+      .report-folio-cell {
+        width: 42mm;
+        text-align: center;
+        background: #fbfbfb;
+      }
+
+      .report-folio-cell span,
+      .report-info-table span,
+      .report-summary-table span {
+        display: block;
+        color: #333333;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .report-folio-cell strong,
+      .report-info-table strong,
+      .report-summary-table strong {
+        display: block;
+        margin-top: 4px;
+        color: #111111;
+        font-size: 0.88rem;
+        line-height: 1.35;
+      }
+
+      .report-section-banner {
+        margin: 18px 0 0;
+        padding: 8px 10px;
+        border: 1px solid #202a33;
+        border-bottom: 0;
+        background: #d9d9d9;
+        color: #111111;
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .report-page .report-block {
+        margin-top: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        break-inside: avoid;
+      }
+
+      .report-summary-panel {
+        display: grid;
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid #202a33;
+      }
+
+      .report-summary-cards {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .report-summary-cards div,
+      .report-summary-note {
+        border: 1px solid #c8d3db;
+        background: #fbfbfb;
+        padding: 9px 10px;
+      }
+
+      .report-summary-cards span,
+      .report-summary-note span {
+        display: block;
+        color: #333333;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .report-summary-cards strong {
+        display: block;
+        margin-top: 4px;
+        color: #111111;
+        font-size: 1.05rem;
+        line-height: 1.2;
+      }
+
+      .report-summary-note {
+        min-height: 20mm;
+      }
+
+      .report-summary-note p {
+        margin: 7px 0 0;
+        color: #222222;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .report-page .report-rack-map {
+        border: 1px solid #202a33;
+        border-radius: 0;
+        background: #202a33;
+      }
+
+      .report-page .report-map-cell {
+        min-width: 54px;
+        border-radius: 0;
+        padding: 7px 5px;
+        font-size: 0.58rem;
+      }
+
+      .report-page .report-table {
+        border: 1px solid #202a33;
+        font-size: 0.78rem;
+        table-layout: fixed;
+      }
+
+      .report-page .report-table th {
+        background: #efefef;
+        color: #111111;
+        border-color: #202a33;
+        font-size: 0.68rem;
+      }
+
+      .report-page .report-table td {
+        border-color: #202a33;
+        overflow-wrap: anywhere;
+        line-height: 1.35;
+      }
+
+      .report-evidence-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid #202a33;
+      }
+
+      .report-evidence-card {
+        display: grid;
+        gap: 7px;
+        margin: 0;
+        break-inside: avoid;
+      }
+
+      .report-evidence-card img {
+        width: 100%;
+        height: 46mm;
+        object-fit: contain;
+        border: 1px solid #202a33;
+        background: #ffffff;
+      }
+
+      .report-evidence-card figcaption {
+        display: grid;
+        gap: 2px;
+        color: #333333;
+        font-size: 0.74rem;
+      }
+
+      .report-evidence-card figcaption strong {
+        color: #111111;
+      }
+
+      .report-page .report-footer {
+        grid-template-columns: 1fr 1fr;
+        border-top-color: #202a33;
+        color: #333333;
+      }
+
+      .report-page .report-footer p {
+        grid-column: 1 / -1;
+        margin: 0;
+        color: #666666;
+        font-size: 0.72rem;
+        text-align: center;
+      }
+
       @media (max-width: 760px) {
         .home-view,
         .workspace-view {
@@ -1007,6 +1326,15 @@
 
         .rack-visual-toolbar {
           display: grid;
+        }
+
+        .structure-editor-main,
+        .structure-range {
+          display: grid;
+        }
+
+        .structure-range label {
+          width: 100%;
         }
 
         .configuration-form,
@@ -1049,7 +1377,7 @@
       @media print {
         @page {
           size: letter;
-          margin: 12mm;
+          margin: 20mm 18mm;
         }
 
         :root,
@@ -1063,6 +1391,7 @@
         .saved-drawer,
         .rack-summary,
         .rack-visual-toolbar,
+        .structure-editor,
         .rack-board-wrapper,
         .cell-editor,
         .bulk-rename-panel,
@@ -1081,6 +1410,13 @@
           padding: 0;
           border: 0;
           border-radius: 0;
+          box-shadow: none;
+        }
+
+        .report-page {
+          max-width: none;
+          width: 100%;
+          padding: 4mm;
           box-shadow: none;
         }
 
@@ -1118,8 +1454,16 @@
         }
 
         .report-block {
-          margin-top: 12px;
-          padding: 12px;
+          margin-top: 0;
+          padding: 0;
+        }
+
+        .report-section-banner {
+          margin-top: 16px;
+        }
+
+        .report-summary-cards {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
         }
 
         .report-rack-map {
@@ -1172,6 +1516,40 @@
         { value: 'critico', label: 'Critico' },
       ];
 
+      function createBayLevels(bays, levels) {
+        return Array.from({ length: Math.max(1, Number(bays)) }, (_, index) => index + 1)
+          .reduce((levelsByBay, bay) => ({
+            ...levelsByBay,
+            [bay]: Math.max(1, Number(levels)),
+          }), {});
+      }
+
+      function normalizeBayLevels(config, bayLevels) {
+        if (!config) return {};
+
+        return Array.from({ length: config.bays }, (_, index) => index + 1)
+          .reduce((levelsByBay, bay) => ({
+            ...levelsByBay,
+            [bay]: Math.max(1, Number(bayLevels?.[bay] || config.levels || 1)),
+          }), {});
+      }
+
+      function detailHasData(detail) {
+        return Boolean(
+          detail?.finding ||
+          detail?.photo ||
+          detail?.status === 'free' ||
+          (detail?.damageLevel && detail.damageLevel !== 'none')
+        );
+      }
+
+      function formatPositionName(config, position) {
+        const rack = String(config?.rackNumber || '01').trim().padStart(2, '0');
+        const bay = String(position.bay).padStart(3, '0');
+        const level = String(position.level).padStart(2, '0');
+        return `${rack}-${bay}-${level}`;
+      }
+
       const storageKey = 'fmcRackInspections.v1';
       const legacyStorageKey = 'fmcRackInspection.current';
 
@@ -1197,6 +1575,10 @@
           return [{
             id: createInspectionId(),
             config: parsedInspection.config || parsedInspection.rackConfig || null,
+            bayLevels: normalizeBayLevels(
+              parsedInspection.config || parsedInspection.rackConfig,
+              parsedInspection.bayLevels
+            ),
             selectedCell: parsedInspection.selectedCell || null,
             cellDetails: parsedInspection.cellDetails || {},
             bulkRename: parsedInspection.bulkRename || {
@@ -1222,6 +1604,7 @@
         const nextInspection = {
           id: appState.activeInspectionId,
           config: appState.config,
+          bayLevels: appState.bayLevels,
           selectedCell: appState.selectedCell,
           cellDetails: appState.cellDetails,
           bulkRename: appState.bulkRename,
@@ -1257,7 +1640,16 @@
         activeInspectionId: null,
         savedPanelOpen: false,
         saveMessage: '',
+        structureMode: false,
+        selectedBay: 1,
+        copiedLevelCount: null,
+        structureRange: {
+          fromBay: 1,
+          toBay: 4,
+          levels: 3,
+        },
         config: null,
+        bayLevels: {},
         selectedCell: null,
         draftPhotos: {},
         cellDetails: {},
@@ -1388,18 +1780,25 @@
 
       function renderRack() {
         const config = appState.config;
+        appState.bayLevels = normalizeBayLevels(config, appState.bayLevels);
         const cells = [];
         const positions = [];
+        const maxLevels = Math.max(...Object.values(appState.bayLevels), 1);
 
-        for (let level = config.levels; level >= 1; level -= 1) {
+        for (let level = maxLevels; level >= 1; level -= 1) {
           for (let bay = 1; bay <= config.bays; bay += 1) {
+            if (level > appState.bayLevels[bay]) {
+              cells.push(`<div class="rack-cell-placeholder" aria-hidden="true"></div>`);
+              continue;
+            }
+
             const id = `B${bay}-N${level}`;
             positions.push({ id, bay, level });
             const detail = appState.cellDetails[id] || {};
             const selectedClass = appState.selectedCell === id ? ' selected' : '';
             const freeClass = detail.status === 'free' ? ' free-space' : '';
             const findingClass = detail.finding ? ' has-finding' : '';
-            const locationName = detail.locationName || `Bahia ${bay}`;
+            const locationName = detail.locationName || formatPositionName(config, { bay, level });
             const findingLabel = detail.finding || 'Sin hallazgo';
             const damageLevel = damageLevels.find((levelItem) => levelItem.value === detail.damageLevel);
             cells.push(`
@@ -1444,7 +1843,7 @@
             </header>
             <div class="rack-summary">
               <div class="summary-item"><span>Bahias</span><strong>${config.bays}</strong></div>
-              <div class="summary-item"><span>Niveles</span><strong>${config.levels}</strong></div>
+              <div class="summary-item"><span>Niveles max.</span><strong>${maxLevels}</strong></div>
               <div class="summary-item"><span>Hallazgos</span><strong>${findingCount}</strong></div>
               <div class="summary-item"><span>Espacios libres</span><strong>${freeSpaceCount}</strong></div>
               <div class="summary-item"><span>Seleccion</span><strong>${escapeHtml(selectedLabel)}</strong></div>
@@ -1453,15 +1852,17 @@
             <div class="rack-visual-toolbar">
               <div>
                 <p class="eyebrow">Vista del rack</p>
-                <h2>Cuadricula de inspeccion</h2>
+                <h2>${appState.structureMode ? 'Editar estructura' : 'Cuadricula de inspeccion'}</h2>
               </div>
               <div class="rack-visual-actions">
                 ${appState.saveMessage ? `<span class="save-message">${escapeHtml(appState.saveMessage)}</span>` : ''}
+                <button class="secondary-action" type="button" data-action="toggle-structure">${appState.structureMode ? 'Terminar edicion' : 'Editar estructura'}</button>
                 <button class="primary-action" type="button" data-action="save-current">Guardar inspeccion</button>
               </div>
             </div>
+            ${appState.structureMode ? renderStructureEditor() : ''}
             <div class="rack-board-wrapper">
-              <div class="rack-board" style="grid-template-columns: repeat(${config.bays}, minmax(96px, 1fr));">${cells.join('')}</div>
+              <div class="rack-board${appState.structureMode ? ' structure-mode' : ''}" style="grid-template-columns: repeat(${config.bays}, minmax(96px, 1fr));">${cells.join('')}</div>
             </div>
             ${editor}
             ${config.observations ? `<aside class="notes-panel"><h2>Observaciones generales</h2><p>${escapeHtml(config.observations)}</p></aside>` : ''}
@@ -1486,6 +1887,48 @@
         const bay = String(position.bay).padStart(baySize, '0');
         const level = String(position.level).padStart(levelSize, '0');
         return `${rackName}-${bay}-${level}`;
+      }
+
+      function renderStructureEditor() {
+        const selectedBay = appState.selectedBay || 1;
+        const selectedLevelCount = appState.bayLevels[selectedBay] || 1;
+        const bayButtons = Object.keys(appState.bayLevels)
+          .map(Number)
+          .map((bay) => `
+            <button class="${selectedBay === bay ? 'selected' : ''}" type="button" data-action="select-structure-bay" data-bay="${bay}">
+              ${String(bay).padStart(3, '0')}
+              <span>${appState.bayLevels[bay]} niveles</span>
+            </button>
+          `)
+          .join('');
+
+        return `
+          <section class="structure-editor" aria-label="Editar estructura del rack">
+            <div class="structure-editor-main">
+              <div>
+                <p class="eyebrow">Bahia seleccionada</p>
+                <h2>Bahia ${String(selectedBay).padStart(3, '0')}</h2>
+              </div>
+              <label>
+                <span>Niveles</span>
+                <input data-action="set-selected-bay-levels" min="1" type="number" value="${selectedLevelCount}">
+              </label>
+              <div class="structure-actions">
+                <button class="secondary-action" type="button" data-action="add-level">+ Nivel</button>
+                <button class="secondary-action" type="button" data-action="remove-level">- Nivel</button>
+                <button class="secondary-action" type="button" data-action="copy-structure">Copiar estructura</button>
+                <button class="secondary-action" type="button" data-action="paste-structure"${appState.copiedLevelCount ? '' : ' disabled'}>Pegar estructura</button>
+              </div>
+            </div>
+            <div class="structure-bay-strip">${bayButtons}</div>
+            <form class="structure-range" data-form="structure-range">
+              <label><span>Desde bahia</span><input name="fromBay" min="1" type="number" value="${appState.structureRange.fromBay}"></label>
+              <label><span>Hasta bahia</span><input name="toBay" min="1" type="number" value="${appState.structureRange.toBay}"></label>
+              <label><span>Niveles</span><input name="levels" min="1" type="number" value="${appState.structureRange.levels}"></label>
+              <button class="primary-action" type="submit">Aplicar a rango</button>
+            </form>
+          </section>
+        `;
       }
 
       function renderBulkRenamePanel(positions) {
@@ -1531,18 +1974,34 @@
       function renderReportPreview(positions, reportItems, findingCount, freeSpaceCount) {
         const config = appState.config;
         const generatedAt = new Date().toLocaleDateString('es-MX');
-        const mapCells = positions
+        const reportNumber = `RACK-${String(config.rackNumber || 'SN').replace(/\s+/g, '-')}`;
+        const maxLevels = Math.max(...positions.map((position) => position.level), 1);
+        const evidenceItems = reportItems.filter((position) => position.detail.photo);
+        const mapPositions = Array.from({ length: maxLevels }, (_, levelIndex) => (
+          Array.from({ length: config.bays }, (_, bayIndex) => {
+            const bay = bayIndex + 1;
+            const level = maxLevels - levelIndex;
+            return positions.find((position) => position.bay === bay && position.level === level) || {
+              id: `empty-B${bay}-N${level}`,
+              bay,
+              level,
+              empty: true,
+            };
+          })
+        )).flat();
+        const mapCells = mapPositions
           .map((position) => {
             const detail = appState.cellDetails[position.id] || {};
+            const emptyClass = position.empty ? ' empty' : '';
             const freeClass = detail.status === 'free' ? ' free' : '';
             const findingClass = detail.finding ? ' finding' : '';
 
-            return `<span class="report-map-cell${freeClass}${findingClass}">B${position.bay}/N${position.level}</span>`;
+            return `<span class="report-map-cell${emptyClass}${freeClass}${findingClass}">${position.empty ? '-' : escapeHtml(formatPositionName(config, position))}</span>`;
           })
           .join('');
         const detailRows = reportItems
           .map((position) => {
-            const locationName = position.detail.locationName || `Bahia ${position.bay} / Nivel ${position.level}`;
+            const locationName = position.detail.locationName || formatPositionName(appState.config, position);
             const type = position.detail.status === 'free' ? 'Espacio libre / puente' : 'Posicion normal';
             const finding = position.detail.finding || 'Sin hallazgo registrado.';
 
@@ -1559,57 +2018,81 @@
             `;
           })
           .join('');
+        const evidenceCards = evidenceItems
+          .map((position, index) => {
+            const locationName = position.detail.locationName || formatPositionName(appState.config, position);
+            const finding = position.detail.finding || 'Sin hallazgo registrado.';
+
+            return `
+              <figure class="report-evidence-card">
+                <img src="${position.detail.photo}" alt="Evidencia ${index + 1}">
+                <figcaption>
+                  <strong>${escapeHtml(locationName)}</strong>
+                  <span>${escapeHtml(finding)}</span>
+                </figcaption>
+              </figure>
+            `;
+          })
+          .join('');
 
         return `
-          <section class="report-preview" aria-label="Reporte imprimible">
-            <header class="report-topline">
-              <div class="report-brand">
-                <span>Inspeccion de racks industriales</span>
-                <h1>Reporte tecnico</h1>
-                <p>${escapeHtml(config.companyName)}</p>
-              </div>
-              <div class="report-meta-card">
-                <strong>Rack ${escapeHtml(config.rackNumber)}</strong>
-                <span>Fecha: ${escapeHtml(generatedAt)}</span>
-                <span>Area: ${escapeHtml(config.rackArea)}</span>
-              </div>
-            </header>
-
-            <div class="report-kpis">
-              ${renderReportMetric('Hallazgos', findingCount, 'danger')}
-              ${renderReportMetric('Espacios libres / puentes', freeSpaceCount, 'muted')}
-              ${renderReportMetric('Dimensiones', `${config.bays} x ${config.levels}`, 'neutral')}
-              ${renderReportMetric('Tipo de rack', config.rackType, 'neutral')}
-            </div>
+          <section class="report-preview report-page" aria-label="Reporte imprimible">
+            <table class="report-header-table">
+              <tbody>
+                <tr>
+                  <td class="report-logo-cell">
+                    <img src="logo.png" alt="FMC Industrial">
+                  </td>
+                  <td class="report-title-cell">
+                    <strong>REPORTE TECNICO DE INSPECCION DE RACKS</strong>
+                    <span>SUMINISTROS BAJA NORTE FMC S. DE R.L. DE C.V.</span>
+                    <span>Inspeccion visual y registro de condiciones por ubicacion</span>
+                  </td>
+                  <td class="report-folio-cell">
+                    <span>Folio</span>
+                    <strong>${escapeHtml(reportNumber)}</strong>
+                    <span>Revision 01</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
             <section class="report-block">
-              <div class="report-block-title">
-                <span>01</span>
-                <h2>Datos generales</h2>
-              </div>
-              <div class="report-data-grid">
-                ${renderReportField('Empresa', config.companyName)}
-                ${renderReportField('Area / ubicacion', config.rackArea)}
-                ${renderReportField('Numero de rack', config.rackNumber)}
-                ${renderReportField('Tipo de rack', config.rackType)}
-                ${renderReportField('Bahias', config.bays)}
-                ${renderReportField('Niveles', config.levels)}
+              <div class="report-section-banner">Datos generales del servicio</div>
+              <table class="report-info-table">
+                <tbody>
+                  <tr>
+                    <td><span>Cliente / empresa</span><strong>${escapeHtml(config.companyName)}</strong></td>
+                    <td><span>Area / ubicacion</span><strong>${escapeHtml(config.rackArea)}</strong></td>
+                    <td><span>Fecha del reporte</span><strong>${escapeHtml(generatedAt)}</strong></td>
+                  </tr>
+                  <tr>
+                    <td><span>Rack inspeccionado</span><strong>${escapeHtml(config.rackNumber)}</strong></td>
+                    <td><span>Tipo de rack</span><strong>${escapeHtml(config.rackType)}</strong></td>
+                    <td><span>Formato de ubicacion</span><strong>Rack-Bahia-Nivel</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+
+            <section class="report-block">
+              <div class="report-section-banner">Resumen general del rack</div>
+              <div class="report-summary-panel">
+                <div class="report-summary-cards">
+                  <div><span>Bahias</span><strong>${escapeHtml(config.bays)}</strong></div>
+                  <div><span>Niveles maximos</span><strong>${escapeHtml(maxLevels)}</strong></div>
+                  <div><span>Hallazgos</span><strong>${escapeHtml(findingCount)}</strong></div>
+                  <div><span>Espacios libres / puentes</span><strong>${escapeHtml(freeSpaceCount)}</strong></div>
+                </div>
+                <div class="report-summary-note">
+                  <span>Observaciones generales</span>
+                  <p>${escapeHtml(config.observations || 'Sin observaciones generales registradas.')}</p>
+                </div>
               </div>
             </section>
 
             <section class="report-block">
-              <div class="report-block-title">
-                <span>02</span>
-                <h2>Observaciones generales</h2>
-              </div>
-              <p class="report-note">${escapeHtml(config.observations || 'Sin observaciones generales registradas.')}</p>
-            </section>
-
-            <section class="report-block">
-              <div class="report-block-title">
-                <span>03</span>
-                <h2>Resumen visual del rack</h2>
-              </div>
+              <div class="report-section-banner">Resumen visual del rack</div>
               <div class="report-rack-map" style="grid-template-columns: repeat(${config.bays}, minmax(32px, 1fr));">${mapCells}</div>
               <div class="report-legend">
                 <span><i class="legend-normal"></i> Normal</span>
@@ -1619,10 +2102,7 @@
             </section>
 
             <section class="report-block">
-              <div class="report-block-title">
-                <span>04</span>
-                <h2>Detalle de hallazgos y espacios libres</h2>
-              </div>
+              <div class="report-section-banner">Detalle de hallazgos y espacios libres</div>
               ${
                 reportItems.length > 0
                   ? `<table class="report-table">
@@ -1643,15 +2123,23 @@
               }
             </section>
 
+            ${evidenceItems.length > 0 ? `
+              <section class="report-block report-evidence-block">
+                <div class="report-section-banner">Evidencia fotografica</div>
+                <div class="report-evidence-grid">${evidenceCards}</div>
+              </section>
+            ` : ''}
+
             <footer class="report-footer">
               <div>
-                <span>Inspector</span>
+                <span>Inspector / responsable</span>
                 <strong>________________________________</strong>
               </div>
               <div>
                 <span>Firma</span>
                 <strong>________________________________</strong>
               </div>
+              <p>Documento generado automaticamente desde la app de inspecciones FMC Industrial.</p>
             </footer>
           </section>
         `;
@@ -1663,7 +2151,73 @@
 
         const bay = cellId.match(/B(\d+)/)[1];
         const level = cellId.match(/N(\d+)/)[1];
-        return `Bahia ${bay} / Nivel ${level}`;
+        return formatPositionName(appState.config, { bay, level });
+      }
+
+      function setBayLevelCount(bay, nextLevelCount) {
+        const safeLevelCount = Math.max(1, Number(nextLevelCount));
+        const currentLevelCount = Number(appState.bayLevels[bay] || appState.config.levels || 1);
+
+        if (safeLevelCount < currentLevelCount) {
+          const removedIds = Array.from(
+            { length: currentLevelCount - safeLevelCount },
+            (_, index) => `B${bay}-N${safeLevelCount + index + 1}`
+          );
+          const hasData = removedIds.some((cellId) => detailHasData(appState.cellDetails[cellId]));
+
+          if (
+            hasData &&
+            !window.confirm('Este nivel tiene hallazgos registrados. Seguro que deseas eliminarlo?')
+          ) {
+            return;
+          }
+
+          removedIds.forEach((cellId) => {
+            delete appState.cellDetails[cellId];
+          });
+        }
+
+        appState.bayLevels[bay] = safeLevelCount;
+        appState.selectedCell = null;
+        saveCurrentInspection();
+      }
+
+      function applyBayLevelRange(fromBay, toBay, nextLevelCount) {
+        const startBay = Math.max(1, Math.min(Number(fromBay), Number(toBay)));
+        const endBay = Math.min(appState.config.bays, Math.max(Number(fromBay), Number(toBay)));
+        const safeLevelCount = Math.max(1, Number(nextLevelCount));
+        const normalizedLevels = normalizeBayLevels(appState.config, appState.bayLevels);
+        const removedIds = [];
+
+        for (let bay = startBay; bay <= endBay; bay += 1) {
+          const currentLevelCount = normalizedLevels[bay] || appState.config.levels || 1;
+          if (safeLevelCount < currentLevelCount) {
+            removedIds.push(...Array.from(
+              { length: currentLevelCount - safeLevelCount },
+              (_, index) => `B${bay}-N${safeLevelCount + index + 1}`
+            ));
+          }
+        }
+
+        const hasData = removedIds.some((cellId) => detailHasData(appState.cellDetails[cellId]));
+
+        if (
+          hasData &&
+          !window.confirm('Este nivel tiene hallazgos registrados. Seguro que deseas eliminarlo?')
+        ) {
+          return;
+        }
+
+        removedIds.forEach((cellId) => {
+          delete appState.cellDetails[cellId];
+        });
+
+        for (let bay = startBay; bay <= endBay; bay += 1) {
+          appState.bayLevels[bay] = safeLevelCount;
+        }
+
+        appState.selectedCell = null;
+        saveCurrentInspection();
       }
 
       function renderCellEditor(cellId) {
@@ -1740,7 +2294,9 @@
         if (action === 'new-inspection') {
           appState.activeInspectionId = createInspectionId();
           appState.savedPanelOpen = false;
+          appState.structureMode = false;
           appState.config = null;
+          appState.bayLevels = {};
           appState.selectedCell = null;
           appState.cellDetails = {};
           appState.bulkRename = {
@@ -1763,6 +2319,7 @@
             appState.activeInspectionId = inspection.id;
             appState.savedPanelOpen = false;
             appState.config = inspection.config || inspection.rackConfig || null;
+            appState.bayLevels = normalizeBayLevels(appState.config, inspection.bayLevels);
             appState.selectedCell = inspection.selectedCell || null;
             appState.cellDetails = inspection.cellDetails || {};
             appState.bulkRename = inspection.bulkRename || {
@@ -1785,6 +2342,7 @@
           if (appState.activeInspectionId === inspectionId) {
             appState.activeInspectionId = null;
             appState.config = null;
+            appState.bayLevels = {};
             appState.selectedCell = null;
             appState.cellDetails = {};
           }
@@ -1800,6 +2358,31 @@
             appState.saveMessage = '';
             if (root.querySelector('[data-screen="rack"]')) renderRack();
           }, 1800);
+        }
+        if (action === 'toggle-structure') {
+          appState.structureMode = !appState.structureMode;
+          appState.selectedCell = null;
+          renderRack();
+        }
+        if (action === 'select-structure-bay') {
+          appState.selectedBay = Number(event.target.closest('[data-bay]').dataset.bay);
+          renderRack();
+        }
+        if (action === 'add-level') {
+          setBayLevelCount(appState.selectedBay, (appState.bayLevels[appState.selectedBay] || 1) + 1);
+          renderRack();
+        }
+        if (action === 'remove-level') {
+          setBayLevelCount(appState.selectedBay, (appState.bayLevels[appState.selectedBay] || 1) - 1);
+          renderRack();
+        }
+        if (action === 'copy-structure') {
+          appState.copiedLevelCount = appState.bayLevels[appState.selectedBay];
+          renderRack();
+        }
+        if (action === 'paste-structure' && appState.copiedLevelCount) {
+          setBayLevelCount(appState.selectedBay, appState.copiedLevelCount);
+          renderRack();
         }
         if (action === 'close-editor') {
           appState.selectedCell = null;
@@ -1818,6 +2401,11 @@
         if (action === 'print-report') window.print();
 
         if (cell) {
+          if (appState.structureMode) {
+            appState.selectedBay = Number(cell.dataset.bay);
+            renderRack();
+            return;
+          }
           appState.selectedCell = cell.dataset.cell;
           saveCurrentInspection();
           renderRack();
@@ -1825,6 +2413,12 @@
       });
 
       root.addEventListener('change', (event) => {
+        if (event.target.matches('[data-action="set-selected-bay-levels"]')) {
+          setBayLevelCount(appState.selectedBay, event.target.value);
+          renderRack();
+          return;
+        }
+
         if (event.target.matches('[data-photo-input]')) {
           const cellId = event.target.dataset.photoInput;
           const file = event.target.files?.[0];
@@ -1854,6 +2448,23 @@
       });
 
       root.addEventListener('submit', (event) => {
+        if (event.target.matches('[data-form="structure-range"]')) {
+          event.preventDefault();
+          const formData = new FormData(event.target);
+          appState.structureRange = {
+            fromBay: Number(formData.get('fromBay')),
+            toBay: Number(formData.get('toBay')),
+            levels: Number(formData.get('levels')),
+          };
+          applyBayLevelRange(
+            appState.structureRange.fromBay,
+            appState.structureRange.toBay,
+            appState.structureRange.levels
+          );
+          renderRack();
+          return;
+        }
+
         if (!event.target.matches('[data-form="rack-config"]')) return;
         event.preventDefault();
 
@@ -1868,6 +2479,12 @@
           bays: Math.max(1, Number(formData.get('bays'))),
           levels: Math.max(1, Number(formData.get('levels'))),
           observations: String(formData.get('observations')).trim(),
+        };
+        appState.bayLevels = createBayLevels(appState.config.bays, appState.config.levels);
+        appState.structureRange = {
+          fromBay: 1,
+          toBay: Math.min(appState.config.bays, 10),
+          levels: appState.config.levels,
         };
         appState.selectedCell = null;
         appState.cellDetails = {};

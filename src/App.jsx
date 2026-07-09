@@ -27,6 +27,41 @@ const initialForm = {
   observations: '',
 };
 
+function createBayLevels(bays, levels) {
+  return Array.from({ length: Math.max(1, Number(bays)) }, (_, index) => [
+    String(index + 1),
+    Math.max(1, Number(levels)),
+  ]).reduce((levelsByBay, [bay, bayLevels]) => ({
+    ...levelsByBay,
+    [bay]: bayLevels,
+  }), {});
+}
+
+function normalizeBayLevels(config, bayLevels) {
+  if (!config) return {};
+
+  return Array.from({ length: config.bays }, (_, index) => index + 1).reduce((levelsByBay, bay) => ({
+    ...levelsByBay,
+    [bay]: Math.max(1, Number(bayLevels?.[bay] || config.levels || 1)),
+  }), {});
+}
+
+function detailHasData(detail) {
+  return Boolean(
+    detail?.finding ||
+    detail?.photo ||
+    detail?.status === 'free' ||
+    (detail?.damageLevel && detail.damageLevel !== 'none')
+  );
+}
+
+function formatPositionName(config, position) {
+  const rack = String(config?.rackNumber || '01').trim().padStart(2, '0');
+  const bay = String(position.bay).padStart(3, '0');
+  const level = String(position.level).padStart(2, '0');
+  return `${rack}-${bay}-${level}`;
+}
+
 const storageKey = 'fmcRackInspections.v1';
 const legacyStorageKey = 'fmcRackInspection.current';
 
@@ -73,6 +108,7 @@ function App() {
   const [screen, setScreen] = useState('home');
   const [form, setForm] = useState(initialForm);
   const [rackConfig, setRackConfig] = useState(null);
+  const [bayLevels, setBayLevels] = useState({});
   const [selectedCell, setSelectedCell] = useState(null);
   const [cellDetails, setCellDetails] = useState({});
 
@@ -92,6 +128,7 @@ function App() {
       id: activeInspectionId,
       form,
       rackConfig,
+      bayLevels,
       selectedCell,
       cellDetails,
       companyName: rackConfig?.companyName || form.companyName,
@@ -114,19 +151,21 @@ function App() {
         (second.updatedAt || '').localeCompare(first.updatedAt || '')
       );
     });
-  }, [activeInspectionId, form, rackConfig, selectedCell, cellDetails, hasActiveWork]);
+  }, [activeInspectionId, form, rackConfig, bayLevels, selectedCell, cellDetails, hasActiveWork]);
 
   const rackPositions = useMemo(() => {
     if (!rackConfig) return [];
 
-    return Array.from({ length: rackConfig.levels }, (_, levelIndex) =>
-      Array.from({ length: rackConfig.bays }, (_, bayIndex) => ({
+    const normalizedLevels = normalizeBayLevels(rackConfig, bayLevels);
+
+    return Array.from({ length: rackConfig.bays }, (_, bayIndex) =>
+      Array.from({ length: normalizedLevels[bayIndex + 1] }, (_, levelIndex) => ({
         id: `B${bayIndex + 1}-N${levelIndex + 1}`,
         bay: bayIndex + 1,
         level: levelIndex + 1,
       }))
-    );
-  }, [rackConfig]);
+    ).flat();
+  }, [rackConfig, bayLevels]);
 
   function handleFieldChange(event) {
     const { name, value } = event.target;
@@ -143,6 +182,7 @@ function App() {
     setScreen('configuration');
     setForm(initialForm);
     setRackConfig(null);
+    setBayLevels({});
     setSelectedCell(null);
     setCellDetails({});
   }
@@ -157,6 +197,7 @@ function App() {
     setIsSavedPanelOpen(false);
     setForm(inspection.form || initialForm);
     setRackConfig(inspection.rackConfig || inspection.config || null);
+    setBayLevels(normalizeBayLevels(inspection.rackConfig || inspection.config, inspection.bayLevels));
     setSelectedCell(inspection.selectedCell || null);
     setCellDetails(inspection.cellDetails || {});
     setScreen(inspection.rackConfig ? 'rack' : 'configuration');
@@ -172,6 +213,7 @@ function App() {
       setScreen('home');
       setForm(initialForm);
       setRackConfig(null);
+      setBayLevels({});
       setSelectedCell(null);
       setCellDetails({});
     }
@@ -198,6 +240,7 @@ function App() {
     };
 
     setRackConfig(cleanConfig);
+    setBayLevels(createBayLevels(cleanConfig.bays, cleanConfig.levels));
     setSelectedCell(null);
     setCellDetails({});
     setScreen('rack');
@@ -212,6 +255,84 @@ function App() {
       ...currentDetails,
       [cellId]: nextDetail,
     }));
+  }
+
+  function handleSetBayLevel(bay, nextLevelCount) {
+    const safeLevelCount = Math.max(1, Number(nextLevelCount));
+    const currentLevelCount = Number(bayLevels[bay] || rackConfig.levels);
+
+    if (safeLevelCount < currentLevelCount) {
+      const removedIds = Array.from(
+        { length: currentLevelCount - safeLevelCount },
+        (_, index) => `B${bay}-N${safeLevelCount + index + 1}`
+      );
+      const hasData = removedIds.some((cellId) => detailHasData(cellDetails[cellId]));
+
+      if (
+        hasData &&
+        !window.confirm('Este nivel tiene hallazgos registrados. Seguro que deseas eliminarlo?')
+      ) {
+        return;
+      }
+
+      setCellDetails((currentDetails) => {
+        const updatedDetails = { ...currentDetails };
+        removedIds.forEach((cellId) => {
+          delete updatedDetails[cellId];
+        });
+        return updatedDetails;
+      });
+    }
+
+    setBayLevels((currentLevels) => ({
+      ...currentLevels,
+      [bay]: safeLevelCount,
+    }));
+    setSelectedCell(null);
+  }
+
+  function handleApplyBayLevelRange(fromBay, toBay, nextLevelCount) {
+    const startBay = Math.max(1, Math.min(Number(fromBay), Number(toBay)));
+    const endBay = Math.min(rackConfig.bays, Math.max(Number(fromBay), Number(toBay)));
+    const safeLevelCount = Math.max(1, Number(nextLevelCount));
+    const normalizedLevels = normalizeBayLevels(rackConfig, bayLevels);
+    const removedIds = [];
+
+    for (let bay = startBay; bay <= endBay; bay += 1) {
+      const currentLevelCount = normalizedLevels[bay] || rackConfig.levels;
+      if (safeLevelCount < currentLevelCount) {
+        removedIds.push(...Array.from(
+          { length: currentLevelCount - safeLevelCount },
+          (_, index) => `B${bay}-N${safeLevelCount + index + 1}`
+        ));
+      }
+    }
+
+    const hasData = removedIds.some((cellId) => detailHasData(cellDetails[cellId]));
+
+    if (
+      hasData &&
+      !window.confirm('Este nivel tiene hallazgos registrados. Seguro que deseas eliminarlo?')
+    ) {
+      return;
+    }
+
+    setCellDetails((currentDetails) => {
+      const updatedDetails = { ...currentDetails };
+      removedIds.forEach((cellId) => {
+        delete updatedDetails[cellId];
+      });
+      return updatedDetails;
+    });
+
+    setBayLevels((currentLevels) => {
+      const updatedLevels = { ...currentLevels };
+      for (let bay = startBay; bay <= endBay; bay += 1) {
+        updatedLevels[bay] = safeLevelCount;
+      }
+      return updatedLevels;
+    });
+    setSelectedCell(null);
   }
 
   function handleBulkRename(nextNames) {
@@ -258,10 +379,13 @@ function App() {
         <RackScreen
           config={rackConfig}
           positions={rackPositions}
+          bayLevels={normalizeBayLevels(rackConfig, bayLevels)}
           selectedCell={selectedCell}
           cellDetails={cellDetails}
           onSelectCell={handleSelectCell}
           onUpdateCell={handleUpdateCell}
+          onSetBayLevel={handleSetBayLevel}
+          onApplyBayLevelRange={handleApplyBayLevelRange}
           onBulkRename={handleBulkRename}
           onEdit={() => setScreen('configuration')}
           onNewInspection={handleNewInspection}
@@ -480,10 +604,13 @@ function ConfigurationScreen({ form, onChange, onSubmit, onBack }) {
 function RackScreen({
   config,
   positions,
+  bayLevels,
   selectedCell,
   cellDetails,
   onSelectCell,
   onUpdateCell,
+  onSetBayLevel,
+  onApplyBayLevelRange,
   onBulkRename,
   onEdit,
   onNewInspection,
@@ -491,8 +618,18 @@ function RackScreen({
   onSaveInspection,
   saveMessage,
 }) {
+  const [isStructureMode, setIsStructureMode] = useState(false);
+  const [selectedBay, setSelectedBay] = useState(1);
+  const [copiedLevelCount, setCopiedLevelCount] = useState(null);
+  const [rangeEdit, setRangeEdit] = useState({
+    fromBay: 1,
+    toBay: Math.min(config.bays, 10),
+    levels: config.levels,
+  });
   const selectedDetail = selectedCell ? cellDetails[selectedCell.id] : null;
-  const flatPositions = positions.flat();
+  const flatPositions = positions;
+  const maxLevels = Math.max(...Object.values(bayLevels), 1);
+  const bays = Array.from({ length: config.bays }, (_, index) => index + 1);
   const reportItems = flatPositions
     .map((position) => ({
       ...position,
@@ -527,14 +664,14 @@ function RackScreen({
 
       <div className="rack-summary">
         <SummaryItem label="Bahias" value={config.bays} />
-        <SummaryItem label="Niveles" value={config.levels} />
+        <SummaryItem label="Niveles max." value={maxLevels} />
         <SummaryItem label="Hallazgos" value={findingCount} />
         <SummaryItem label="Espacios libres" value={freeSpaceCount} />
         <SummaryItem
           label="Seleccion"
           value={
             selectedCell
-              ? selectedDetail?.locationName || `Bahia ${selectedCell.bay} / Nivel ${selectedCell.level}`
+              ? selectedDetail?.locationName || formatPositionName(config, selectedCell)
               : 'Sin seleccionar'
           }
         />
@@ -545,31 +682,75 @@ function RackScreen({
       <div className="rack-visual-toolbar">
         <div>
           <p className="eyebrow">Vista del rack</p>
-          <h2>Cuadricula de inspeccion</h2>
+          <h2>{isStructureMode ? 'Editar estructura' : 'Cuadricula de inspeccion'}</h2>
         </div>
         <div className="rack-visual-actions">
           {saveMessage && <span className="save-message">{saveMessage}</span>}
+          <button
+            className="secondary-action"
+            type="button"
+            onClick={() => {
+              setIsStructureMode((currentMode) => !currentMode);
+              onSelectCell(null);
+            }}
+          >
+            {isStructureMode ? 'Terminar edicion' : 'Editar estructura'}
+          </button>
           <button className="primary-action" type="button" onClick={onSaveInspection}>
             Guardar inspeccion
           </button>
         </div>
       </div>
 
+      {isStructureMode && (
+        <StructureEditor
+          bayLevels={bayLevels}
+          copiedLevelCount={copiedLevelCount}
+          rangeEdit={rangeEdit}
+          selectedBay={selectedBay}
+          onApplyRange={() => onApplyBayLevelRange(
+            rangeEdit.fromBay,
+            rangeEdit.toBay,
+            rangeEdit.levels
+          )}
+          onCopy={() => setCopiedLevelCount(bayLevels[selectedBay])}
+          onPaste={() => copiedLevelCount && onSetBayLevel(selectedBay, copiedLevelCount)}
+          onRangeChange={(field, value) => setRangeEdit((currentRange) => ({
+            ...currentRange,
+            [field]: Number(value),
+          }))}
+          onSelectBay={setSelectedBay}
+          onSetBayLevel={onSetBayLevel}
+        />
+      )}
+
       <div className="rack-board-wrapper" aria-label="Cuadricula del rack">
         <div
-          className="rack-board"
+          className={`rack-board ${isStructureMode ? 'structure-mode' : ''}`}
           style={{ gridTemplateColumns: `repeat(${config.bays}, minmax(96px, 1fr))` }}
         >
-          {positions
-            .slice()
-            .reverse()
-            .flat()
-            .map((position) => {
+          {Array.from({ length: maxLevels }, (_, levelOffset) => maxLevels - levelOffset).map((level) => (
+            bays.map((bay) => {
+              if (level > bayLevels[bay]) {
+                return (
+                  <div
+                    className="rack-cell-placeholder"
+                    key={`B${bay}-N${level}-empty`}
+                    aria-hidden="true"
+                  />
+                );
+              }
+
+              const position = {
+                id: `B${bay}-N${level}`,
+                bay,
+                level,
+              };
               const isSelected = selectedCell?.id === position.id;
               const detail = cellDetails[position.id];
               const isFreeSpace = detail?.status === 'free';
               const hasFinding = Boolean(detail?.finding);
-              const label = detail?.locationName || `Bahia ${position.bay}`;
+              const label = detail?.locationName || formatPositionName(config, position);
               const findingLabel = detail?.finding || 'Sin hallazgo';
               const damageLabel = damageLevels.find((level) => level.value === detail?.damageLevel)?.label;
 
@@ -583,7 +764,13 @@ function RackScreen({
                   ].join(' ')}
                   key={position.id}
                   type="button"
-                  onClick={() => onSelectCell(position)}
+                  onClick={() => {
+                    if (isStructureMode) {
+                      setSelectedBay(position.bay);
+                      return;
+                    }
+                    onSelectCell(position);
+                  }}
                   aria-pressed={isSelected}
                 >
                   <strong>{label}</strong>
@@ -593,7 +780,8 @@ function RackScreen({
                   <span>{findingLabel}</span>
                 </button>
               );
-            })}
+            })
+          ))}
         </div>
       </div>
 
@@ -629,6 +817,122 @@ function RackScreen({
   );
 }
 
+function StructureEditor({
+  bayLevels,
+  copiedLevelCount,
+  rangeEdit,
+  selectedBay,
+  onApplyRange,
+  onCopy,
+  onPaste,
+  onRangeChange,
+  onSelectBay,
+  onSetBayLevel,
+}) {
+  const selectedLevelCount = bayLevels[selectedBay] || 1;
+  const bayOptions = Object.keys(bayLevels).map(Number);
+
+  return (
+    <section className="structure-editor" aria-label="Editar estructura del rack">
+      <div className="structure-editor-main">
+        <div>
+          <p className="eyebrow">Bahia seleccionada</p>
+          <h2>Bahia {String(selectedBay).padStart(3, '0')}</h2>
+        </div>
+        <label>
+          <span>Niveles</span>
+          <input
+            min="1"
+            type="number"
+            value={selectedLevelCount}
+            onChange={(event) => onSetBayLevel(selectedBay, event.target.value)}
+          />
+        </label>
+        <div className="structure-actions">
+          <button
+            className="secondary-action"
+            type="button"
+            onClick={() => onSetBayLevel(selectedBay, selectedLevelCount + 1)}
+          >
+            + Nivel
+          </button>
+          <button
+            className="secondary-action"
+            type="button"
+            onClick={() => onSetBayLevel(selectedBay, selectedLevelCount - 1)}
+          >
+            - Nivel
+          </button>
+          <button className="secondary-action" type="button" onClick={onCopy}>
+            Copiar estructura
+          </button>
+          <button
+            className="secondary-action"
+            disabled={!copiedLevelCount}
+            type="button"
+            onClick={onPaste}
+          >
+            Pegar estructura
+          </button>
+        </div>
+      </div>
+
+      <div className="structure-bay-strip">
+        {bayOptions.map((bay) => (
+          <button
+            className={selectedBay === bay ? 'selected' : ''}
+            key={bay}
+            type="button"
+            onClick={() => onSelectBay(bay)}
+          >
+            {String(bay).padStart(3, '0')}
+            <span>{bayLevels[bay]} niveles</span>
+          </button>
+        ))}
+      </div>
+
+      <form
+        className="structure-range"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onApplyRange();
+        }}
+      >
+        <label>
+          <span>Desde bahia</span>
+          <input
+            min="1"
+            type="number"
+            value={rangeEdit.fromBay}
+            onChange={(event) => onRangeChange('fromBay', event.target.value)}
+          />
+        </label>
+        <label>
+          <span>Hasta bahia</span>
+          <input
+            min="1"
+            type="number"
+            value={rangeEdit.toBay}
+            onChange={(event) => onRangeChange('toBay', event.target.value)}
+          />
+        </label>
+        <label>
+          <span>Niveles</span>
+          <input
+            min="1"
+            type="number"
+            value={rangeEdit.levels}
+            onChange={(event) => onRangeChange('levels', event.target.value)}
+          />
+        </label>
+        <button className="primary-action" type="submit">
+          Aplicar a rango
+        </button>
+      </form>
+    </section>
+  );
+}
+
 function ReportPreview({
   config,
   positions,
@@ -638,64 +942,80 @@ function ReportPreview({
   freeSpaceCount,
 }) {
   const generatedAt = new Date().toLocaleDateString('es-MX');
-  const mapPositions = Array.from({ length: config.levels }, (_, levelIndex) =>
-    Array.from({ length: config.bays }, (_, bayIndex) => ({
-      id: `B${bayIndex + 1}-N${config.levels - levelIndex}`,
-      bay: bayIndex + 1,
-      level: config.levels - levelIndex,
-    }))
-  ).flat();
+  const reportNumber = `RACK-${String(config.rackNumber || 'SN').replace(/\s+/g, '-')}`;
+  const maxLevels = Math.max(...positions.map((position) => position.level), 1);
+  const evidenceItems = reportItems.filter((position) => position.detail.photo);
+  const mapPositions = Array.from({ length: maxLevels }, (_, levelIndex) => (
+    Array.from({ length: config.bays }, (_, bayIndex) => {
+      const bay = bayIndex + 1;
+      const level = maxLevels - levelIndex;
+      return positions.find((position) => position.bay === bay && position.level === level) || {
+        id: `empty-B${bay}-N${level}`,
+        bay,
+        level,
+        empty: true,
+      };
+    })
+  )).flat();
 
   return (
-    <section className="report-preview" aria-label="Reporte imprimible">
-      <header className="report-topline">
-        <div className="report-brand">
-          <span>Inspeccion de racks industriales</span>
-          <h1>Reporte tecnico</h1>
-          <p>{config.companyName}</p>
-        </div>
-        <div className="report-meta-card">
-          <strong>Rack {config.rackNumber}</strong>
-          <span>Fecha: {generatedAt}</span>
-          <span>Area: {config.rackArea}</span>
-        </div>
-      </header>
-
-      <div className="report-kpis">
-        <ReportMetric label="Hallazgos" value={findingCount} tone="danger" />
-        <ReportMetric label="Espacios libres / puentes" value={freeSpaceCount} tone="muted" />
-        <ReportMetric label="Dimensiones" value={`${config.bays} x ${config.levels}`} tone="neutral" />
-        <ReportMetric label="Tipo de rack" value={config.rackType} tone="neutral" />
-      </div>
+    <section className="report-preview report-page" aria-label="Reporte imprimible">
+      <table className="report-header-table">
+        <tbody>
+          <tr>
+            <td className="report-logo-cell">
+              <img src="logo.png" alt="FMC Industrial" />
+            </td>
+            <td className="report-title-cell">
+              <strong>REPORTE TECNICO DE INSPECCION DE RACKS</strong>
+              <span>SUMINISTROS BAJA NORTE FMC S. DE R.L. DE C.V.</span>
+              <span>Inspeccion visual y registro de condiciones por ubicacion</span>
+            </td>
+            <td className="report-folio-cell">
+              <span>Folio</span>
+              <strong>{reportNumber}</strong>
+              <span>Revision 01</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
       <section className="report-block">
-        <div className="report-block-title">
-          <span>01</span>
-          <h2>Datos generales</h2>
-        </div>
-        <div className="report-data-grid">
-          <ReportField label="Empresa" value={config.companyName} />
-          <ReportField label="Area / ubicacion" value={config.rackArea} />
-          <ReportField label="Numero de rack" value={config.rackNumber} />
-          <ReportField label="Tipo de rack" value={config.rackType} />
-          <ReportField label="Bahias" value={config.bays} />
-          <ReportField label="Niveles" value={config.levels} />
+        <div className="report-section-banner">Datos generales del servicio</div>
+        <table className="report-info-table">
+          <tbody>
+            <tr>
+              <td><span>Cliente / empresa</span><strong>{config.companyName}</strong></td>
+              <td><span>Area / ubicacion</span><strong>{config.rackArea}</strong></td>
+              <td><span>Fecha del reporte</span><strong>{generatedAt}</strong></td>
+            </tr>
+            <tr>
+              <td><span>Rack inspeccionado</span><strong>{config.rackNumber}</strong></td>
+              <td><span>Tipo de rack</span><strong>{config.rackType}</strong></td>
+              <td><span>Formato de ubicacion</span><strong>Rack-Bahia-Nivel</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section className="report-block">
+        <div className="report-section-banner">Resumen general del rack</div>
+        <div className="report-summary-panel">
+          <div className="report-summary-cards">
+            <div><span>Bahias</span><strong>{config.bays}</strong></div>
+            <div><span>Niveles maximos</span><strong>{maxLevels}</strong></div>
+            <div><span>Hallazgos</span><strong>{findingCount}</strong></div>
+            <div><span>Espacios libres / puentes</span><strong>{freeSpaceCount}</strong></div>
+          </div>
+          <div className="report-summary-note">
+            <span>Observaciones generales</span>
+            <p>{config.observations || 'Sin observaciones generales registradas.'}</p>
+          </div>
         </div>
       </section>
 
       <section className="report-block">
-        <div className="report-block-title">
-          <span>02</span>
-          <h2>Observaciones generales</h2>
-        </div>
-        <p className="report-note">{config.observations || 'Sin observaciones generales registradas.'}</p>
-      </section>
-
-      <section className="report-block">
-        <div className="report-block-title">
-          <span>03</span>
-          <h2>Resumen visual del rack</h2>
-        </div>
+        <div className="report-section-banner">Resumen visual del rack</div>
         <div
           className="report-rack-map"
           style={{ gridTemplateColumns: `repeat(${config.bays}, minmax(32px, 1fr))` }}
@@ -704,13 +1024,14 @@ function ReportPreview({
             const detail = cellDetails[position.id] || {};
             const className = [
               'report-map-cell',
+              position.empty ? 'empty' : '',
               detail.status === 'free' ? 'free' : '',
               detail.finding ? 'finding' : '',
             ].join(' ');
 
             return (
               <span className={className} key={position.id}>
-                B{position.bay}/N{position.level}
+                {position.empty ? '-' : formatPositionName(config, position)}
               </span>
             );
           })}
@@ -723,10 +1044,7 @@ function ReportPreview({
       </section>
 
       <section className="report-block">
-        <div className="report-block-title">
-          <span>04</span>
-          <h2>Detalle de hallazgos y espacios libres</h2>
-        </div>
+        <div className="report-section-banner">Detalle de hallazgos y espacios libres</div>
         {reportItems.length > 0 ? (
           <table className="report-table">
             <thead>
@@ -743,7 +1061,7 @@ function ReportPreview({
             <tbody>
               {reportItems.map((position) => (
                 <tr key={position.id}>
-                  <td>{position.detail.locationName || `Bahia ${position.bay} / Nivel ${position.level}`}</td>
+                  <td>{position.detail.locationName || formatPositionName(config, position)}</td>
                   <td>{position.bay}</td>
                   <td>{position.level}</td>
                   <td>{position.detail.status === 'free' ? 'Espacio libre / puente' : 'Posicion normal'}</td>
@@ -765,15 +1083,33 @@ function ReportPreview({
         )}
       </section>
 
+      {evidenceItems.length > 0 && (
+        <section className="report-block report-evidence-block">
+          <div className="report-section-banner">Evidencia fotografica</div>
+          <div className="report-evidence-grid">
+            {evidenceItems.map((position, index) => (
+              <figure className="report-evidence-card" key={position.id}>
+                <img src={position.detail.photo} alt={`Evidencia ${index + 1}`} />
+                <figcaption>
+                  <strong>{position.detail.locationName || formatPositionName(config, position)}</strong>
+                  <span>{position.detail.finding || 'Sin hallazgo registrado.'}</span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
+
       <footer className="report-footer">
         <div>
-          <span>Inspector</span>
+          <span>Inspector / responsable</span>
           <strong>________________________________</strong>
         </div>
         <div>
           <span>Firma</span>
           <strong>________________________________</strong>
         </div>
+        <p>Documento generado automaticamente desde la app de inspecciones FMC Industrial.</p>
       </footer>
     </section>
   );
