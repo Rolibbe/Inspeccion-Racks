@@ -17,10 +17,151 @@ const damageLevels = [
   { value: 'critico', label: 'Critico' },
 ];
 
+const complianceStatuses = [
+  { value: 'cumple', label: 'Cumple' },
+  { value: 'no-cumple', label: 'No cumple' },
+];
+
+const complianceRequirements = [
+  {
+    category: 'Senalizacion y seguridad',
+    icon: 'S',
+    items: [
+      {
+        id: 'capacity-label',
+        name: 'Etiqueta de capacidad instalada y visible.',
+        description: 'Verificar que el rack cuente con etiqueta indicando capacidad maxima de carga.',
+        recommendation: 'Instalar etiqueta de capacidad visible indicando la capacidad maxima permitida del sistema de almacenamiento.',
+      },
+      {
+        id: 'manufacturer-plate',
+        name: 'Placa de identificacion del fabricante.',
+        description: 'Verificar que exista placa de identificacion con fabricante, modelo o datos del sistema.',
+        recommendation: 'Instalar o reponer placa de identificacion del sistema.',
+      },
+      {
+        id: 'marked-aisles',
+        name: 'Pasillos correctamente senalizados.',
+        description: 'Los pasillos deben estar claramente delimitados para circulacion segura.',
+        recommendation: 'Senalizar los pasillos conforme a las condiciones de operacion.',
+      },
+      {
+        id: 'load-signage',
+        name: 'Senalizacion de carga maxima.',
+        description: 'Verificar que exista senalizacion visible indicando restricciones de carga.',
+        recommendation: 'Instalar senalizacion de carga maxima permitida.',
+      },
+      {
+        id: 'impact-protection',
+        name: 'Proteccion contra impacto (Esquineros).',
+        description: 'Verificar existencia de protectores donde exista riesgo de impacto por montacargas.',
+        recommendation: 'Instalar protectores de columna o esquineros.',
+      },
+      {
+        id: 'convex-mirrors',
+        name: 'Espejos convexos.',
+        description: 'Verificar instalacion en cruces o zonas con poca visibilidad.',
+        recommendation: 'Instalar espejos convexos para reducir riesgos de colision.',
+      },
+      {
+        id: 'barriers-stops',
+        name: 'Topes o barreras de proteccion cuando sean necesarios.',
+        description: 'Verificar existencia de elementos que protejan el rack contra impactos.',
+        recommendation: 'Instalar barreras o topes de proteccion.',
+      },
+    ],
+  },
+  {
+    category: 'Instalacion',
+    icon: 'I',
+    items: [
+      {
+        id: 'anchors-installed',
+        name: 'Anclas instaladas correctamente.',
+        description: 'Verificar que todos los bastidores se encuentren correctamente anclados.',
+        recommendation: 'Instalar las anclas faltantes.',
+      },
+      {
+        id: 'anchor-torque',
+        name: 'Evidencia de torque de anclas.',
+        description: 'Confirmar que exista evidencia del torque aplicado durante la instalacion.',
+        recommendation: 'Realizar torque conforme a especificaciones del fabricante y documentarlo.',
+      },
+      {
+        id: 'verticality',
+        name: 'Verticalidad del sistema.',
+        description: 'Verificar que el rack no presente inclinaciones visibles.',
+        recommendation: 'Realizar alineacion y nivelacion del sistema.',
+      },
+    ],
+  },
+  {
+    category: 'Operacion',
+    icon: 'O',
+    items: [
+      {
+        id: 'no-overload',
+        name: 'No existen sobrecargas.',
+        description: 'Verificar que no se exceda la capacidad del rack.',
+        recommendation: 'Reducir carga conforme a capacidad del fabricante.',
+      },
+      {
+        id: 'no-unauthorized-mods',
+        name: 'No existen modificaciones no autorizadas.',
+        description: 'Verificar que no existan perforaciones, soldaduras o modificaciones estructurales.',
+        recommendation: 'Eliminar modificaciones no autorizadas y evaluar la estructura.',
+      },
+    ],
+  },
+  {
+    category: 'Documentacion',
+    icon: 'D',
+    items: [
+      {
+        id: 'maintenance-program',
+        name: 'Evidencia de programa de mantenimiento.',
+        description: 'Verificar existencia del programa de mantenimiento.',
+        recommendation: 'Implementar programa documentado.',
+      },
+      {
+        id: 'preventive-maintenance',
+        name: 'Evidencia de mantenimiento preventivo.',
+        description: 'Verificar registros de mantenimiento.',
+        recommendation: 'Realizar mantenimiento preventivo periodico.',
+      },
+      {
+        id: 'previous-findings-corrected',
+        name: 'Evidencia de correccion de hallazgos anteriores.',
+        description: 'Verificar registros de acciones correctivas.',
+        recommendation: 'Documentar la correccion de todos los hallazgos.',
+      },
+      {
+        id: 'periodic-inspections',
+        name: 'Evidencia de inspecciones periodicas.',
+        description: 'Verificar historial de inspecciones.',
+        recommendation: 'Implementar inspecciones periodicas documentadas.',
+      },
+      {
+        id: 'staff-training',
+        name: 'Evidencia de capacitacion del personal.',
+        description: 'Verificar que operadores y almacenistas hayan recibido capacitacion.',
+        recommendation: 'Capacitar al personal y conservar evidencia documental.',
+      },
+    ],
+  },
+];
+
+const complianceRequirementMap = complianceRequirements
+  .flatMap((group) => group.items.map((item) => ({ ...item, category: group.category })))
+  .reduce((items, item) => ({ ...items, [item.id]: item }), {});
+
 const initialForm = {
   companyName: '',
+  companyAddress: '',
   rackArea: '',
   rackNumber: '',
+  reportFolio: '',
+  inspectionDate: '',
   rackType: '',
   bays: 4,
   levels: 3,
@@ -60,6 +201,42 @@ function formatPositionName(config, position) {
   const bay = String(position.bay).padStart(3, '0');
   const level = String(position.level).padStart(2, '0');
   return `${rack}-${bay}-${level}`;
+}
+
+function formatDisplayDate(value) {
+  if (!value) return new Date().toLocaleDateString('es-MX');
+
+  const [year, month, day] = String(value).split('-').map(Number);
+  if (!year || !month || !day) return String(value);
+
+  return new Date(year, month - 1, day).toLocaleDateString('es-MX');
+}
+
+function calculateComplianceSummary(details = {}) {
+  const counts = {
+    cumple: 0,
+    'no-cumple': 0,
+    'no-aplica': 0,
+    'no-verificado': 0,
+  };
+
+  complianceRequirements.forEach((group) => {
+    group.items.forEach((item) => {
+      const status = details[item.id]?.status || 'no-verificado';
+      counts[status] = (counts[status] || 0) + 1;
+    });
+  });
+
+  const applicable = counts.cumple + counts['no-cumple'];
+  const percentage = applicable > 0 ? Math.round((counts.cumple / applicable) * 100) : 0;
+  const tone = percentage >= 80 ? 'good' : percentage >= 60 ? 'warning' : 'danger';
+
+  return {
+    counts,
+    percentage,
+    tone,
+    total: complianceRequirements.reduce((sum, group) => sum + group.items.length, 0),
+  };
 }
 
 const storageKey = 'fmcRackInspections.v1';
@@ -111,9 +288,10 @@ function App() {
   const [bayLevels, setBayLevels] = useState({});
   const [selectedCell, setSelectedCell] = useState(null);
   const [cellDetails, setCellDetails] = useState({});
+  const [complianceDetails, setComplianceDetails] = useState({});
 
   const hasActiveWork = Boolean(
-    rackConfig || Object.keys(cellDetails).length > 0 || hasFormData(form)
+    rackConfig || Object.keys(cellDetails).length > 0 || Object.keys(complianceDetails).length > 0 || hasFormData(form)
   );
 
   useEffect(() => {
@@ -131,9 +309,13 @@ function App() {
       bayLevels,
       selectedCell,
       cellDetails,
+      complianceDetails,
       companyName: rackConfig?.companyName || form.companyName,
+      companyAddress: rackConfig?.companyAddress || form.companyAddress,
       rackArea: rackConfig?.rackArea || form.rackArea,
       rackNumber: rackConfig?.rackNumber || form.rackNumber,
+      reportFolio: rackConfig?.reportFolio || form.reportFolio,
+      inspectionDate: rackConfig?.inspectionDate || form.inspectionDate,
       rackType: rackConfig?.rackType || form.rackType,
       updatedAt,
     };
@@ -151,7 +333,7 @@ function App() {
         (second.updatedAt || '').localeCompare(first.updatedAt || '')
       );
     });
-  }, [activeInspectionId, form, rackConfig, bayLevels, selectedCell, cellDetails, hasActiveWork]);
+  }, [activeInspectionId, form, rackConfig, bayLevels, selectedCell, cellDetails, complianceDetails, hasActiveWork]);
 
   const rackPositions = useMemo(() => {
     if (!rackConfig) return [];
@@ -185,6 +367,7 @@ function App() {
     setBayLevels({});
     setSelectedCell(null);
     setCellDetails({});
+    setComplianceDetails({});
   }
 
   function handleOpenInspection(inspectionId) {
@@ -200,6 +383,7 @@ function App() {
     setBayLevels(normalizeBayLevels(inspection.rackConfig || inspection.config, inspection.bayLevels));
     setSelectedCell(inspection.selectedCell || null);
     setCellDetails(inspection.cellDetails || {});
+    setComplianceDetails(inspection.complianceDetails || {});
     setScreen(inspection.rackConfig ? 'rack' : 'configuration');
   }
 
@@ -216,6 +400,7 @@ function App() {
       setBayLevels({});
       setSelectedCell(null);
       setCellDetails({});
+      setComplianceDetails({});
     }
   }
 
@@ -231,8 +416,11 @@ function App() {
     const cleanConfig = {
       ...form,
       companyName: form.companyName.trim(),
+      companyAddress: form.companyAddress.trim(),
       rackArea: form.rackArea.trim(),
       rackNumber: form.rackNumber.trim(),
+      reportFolio: form.reportFolio.trim(),
+      inspectionDate: form.inspectionDate,
       rackType: form.rackType.trim(),
       observations: form.observations.trim(),
       bays: Math.max(1, Number(form.bays)),
@@ -243,6 +431,7 @@ function App() {
     setBayLevels(createBayLevels(cleanConfig.bays, cleanConfig.levels));
     setSelectedCell(null);
     setCellDetails({});
+    setComplianceDetails({});
     setScreen('rack');
   }
 
@@ -350,6 +539,16 @@ function App() {
     });
   }
 
+  function handleUpdateCompliance(requirementId, nextDetail) {
+    setComplianceDetails((currentDetails) => ({
+      ...currentDetails,
+      [requirementId]: {
+        ...(currentDetails[requirementId] || {}),
+        ...nextDetail,
+      },
+    }));
+  }
+
   return (
     <main className="app-shell">
       <SavedInspectionsMenu
@@ -382,8 +581,10 @@ function App() {
           bayLevels={normalizeBayLevels(rackConfig, bayLevels)}
           selectedCell={selectedCell}
           cellDetails={cellDetails}
+          complianceDetails={complianceDetails}
           onSelectCell={handleSelectCell}
           onUpdateCell={handleUpdateCell}
+          onUpdateCompliance={handleUpdateCompliance}
           onSetBayLevel={handleSetBayLevel}
           onApplyBayLevelRange={handleApplyBayLevelRange}
           onBulkRename={handleBulkRename}
@@ -521,6 +722,16 @@ function ConfigurationScreen({ form, onChange, onSubmit, onBack }) {
         </label>
 
         <label>
+          <span>Direccion de la empresa</span>
+          <input
+            name="companyAddress"
+            value={form.companyAddress}
+            onChange={onChange}
+            placeholder="Ej. Calle, ciudad, estado"
+          />
+        </label>
+
+        <label>
           <span>Area o ubicacion del rack</span>
           <input
             name="rackArea"
@@ -539,6 +750,26 @@ function ConfigurationScreen({ form, onChange, onSubmit, onBack }) {
             onChange={onChange}
             placeholder="Ej. R-014"
             required
+          />
+        </label>
+
+        <label>
+          <span>Folio del reporte</span>
+          <input
+            name="reportFolio"
+            value={form.reportFolio}
+            onChange={onChange}
+            placeholder="Ej. REPORTE 26-159"
+          />
+        </label>
+
+        <label>
+          <span>Fecha de inspeccion</span>
+          <input
+            name="inspectionDate"
+            type="date"
+            value={form.inspectionDate}
+            onChange={onChange}
           />
         </label>
 
@@ -607,8 +838,10 @@ function RackScreen({
   bayLevels,
   selectedCell,
   cellDetails,
+  complianceDetails,
   onSelectCell,
   onUpdateCell,
+  onUpdateCompliance,
   onSetBayLevel,
   onApplyBayLevelRange,
   onBulkRename,
@@ -638,6 +871,7 @@ function RackScreen({
     .filter((position) => position.detail.status === 'free' || position.detail.finding || position.detail.photo);
   const freeSpaceCount = reportItems.filter((position) => position.detail.status === 'free').length;
   const findingCount = reportItems.filter((position) => position.detail.finding).length;
+  const complianceSummary = calculateComplianceSummary(complianceDetails);
 
   return (
     <section className="workspace-view rack-workspace">
@@ -805,10 +1039,18 @@ function RackScreen({
         </aside>
       )}
 
+      <ComplianceModule
+        details={complianceDetails}
+        onUpdate={onUpdateCompliance}
+        summary={complianceSummary}
+      />
+
       <ReportPreview
         config={config}
         positions={flatPositions}
         cellDetails={cellDetails}
+        complianceDetails={complianceDetails}
+        complianceSummary={complianceSummary}
         reportItems={reportItems}
         findingCount={findingCount}
         freeSpaceCount={freeSpaceCount}
@@ -933,18 +1175,149 @@ function StructureEditor({
   );
 }
 
+function ComplianceModule({ details, onUpdate, summary }) {
+  return (
+    <section className="compliance-module" aria-label="Cumplimiento normativo">
+      <div className="compliance-header">
+        <div>
+          <p className="eyebrow">Inspeccion general del sistema de racks</p>
+          <h2>Cumplimiento normativo</h2>
+        </div>
+        <div className={`compliance-score ${summary.tone}`}>
+          <span>Cumplimiento general</span>
+          <strong>{summary.percentage}%</strong>
+          <div>
+            <i style={{ width: `${summary.percentage}%` }} />
+          </div>
+        </div>
+      </div>
+
+      <div className="compliance-counts">
+        <span className="cumple">Cumple: {summary.counts.cumple}</span>
+        <span className="no-cumple">No cumple: {summary.counts['no-cumple']}</span>
+        <span className="no-verificado">Pendientes: {summary.counts['no-aplica'] + summary.counts['no-verificado']}</span>
+      </div>
+
+      <div className="compliance-groups">
+        {complianceRequirements.map((group) => (
+          <section className="compliance-group" key={group.category}>
+            <div className="compliance-group-title">
+              <span>{group.icon}</span>
+              <h3>{group.category}</h3>
+            </div>
+            <div className="compliance-cards">
+              {group.items.map((item) => (
+                <ComplianceCard
+                  detail={details[item.id] || {}}
+                  item={item}
+                  key={item.id}
+                  onUpdate={(nextDetail) => onUpdate(item.id, nextDetail)}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ComplianceCard({ detail, item, onUpdate }) {
+  const status = detail.status || 'no-verificado';
+  const showFindingFields = status === 'no-cumple';
+
+  function handlePhotoChange(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      onUpdate({ photo: String(reader.result) });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <article className={`compliance-card ${status}`}>
+      <div className="compliance-card-main">
+        <div>
+          <h4>{item.name}</h4>
+          <p>{item.description}</p>
+        </div>
+        <div className="status-chips" role="group" aria-label={`Estado de ${item.name}`}>
+          {complianceStatuses.map((statusOption) => (
+            <button
+              className={status === statusOption.value ? 'selected' : ''}
+              key={statusOption.value}
+              type="button"
+              onClick={() => onUpdate({
+                status: statusOption.value,
+                recommendation: statusOption.value === 'no-cumple' ? item.recommendation : '',
+              })}
+            >
+              <span className={`status-dot ${statusOption.value}`} />
+              {statusOption.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {showFindingFields && (
+        <div className="compliance-finding-fields">
+          <label>
+            <span>Observaciones</span>
+            <textarea
+              rows="3"
+              value={detail.observations || ''}
+              onChange={(event) => onUpdate({ observations: event.target.value })}
+              placeholder="Describe la condicion encontrada."
+            />
+          </label>
+          <label>
+            <span>Evidencia fotografica</span>
+            <input accept="image/*" type="file" onChange={handlePhotoChange} />
+          </label>
+          {detail.photo && (
+            <div className="compliance-photo-preview">
+              <img src={detail.photo} alt="Evidencia normativa" />
+              <button className="secondary-action" type="button" onClick={() => onUpdate({ photo: '' })}>
+                Quitar foto
+              </button>
+            </div>
+          )}
+          <div className="auto-recommendation">
+            <span>Recomendacion automatica</span>
+            <p>{detail.recommendation || item.recommendation}</p>
+          </div>
+        </div>
+      )}
+    </article>
+  );
+}
+
 function ReportPreview({
   config,
   positions,
   cellDetails,
+  complianceDetails,
+  complianceSummary,
   reportItems,
   findingCount,
   freeSpaceCount,
 }) {
   const generatedAt = new Date().toLocaleDateString('es-MX');
-  const reportNumber = `RACK-${String(config.rackNumber || 'SN').replace(/\s+/g, '-')}`;
+  const inspectionDateLabel = formatDisplayDate(config.inspectionDate);
+  const reportNumber = config.reportFolio || `RACK-${String(config.rackNumber || 'SN').replace(/\s+/g, '-')}`;
   const maxLevels = Math.max(...positions.map((position) => position.level), 1);
   const evidenceItems = reportItems.filter((position) => position.detail.photo);
+  const complianceRows = complianceRequirements.flatMap((group) => (
+    group.items.map((item) => ({
+      ...item,
+      category: group.category,
+      detail: complianceDetails[item.id] || {},
+    }))
+  ));
+  const complianceFindings = complianceRows.filter((item) => item.detail.status === 'no-cumple');
   const mapPositions = Array.from({ length: maxLevels }, (_, levelIndex) => (
     Array.from({ length: config.bays }, (_, bayIndex) => {
       const bay = bayIndex + 1;
@@ -986,13 +1359,18 @@ function ReportPreview({
           <tbody>
             <tr>
               <td><span>Cliente / empresa</span><strong>{config.companyName}</strong></td>
-              <td><span>Area / ubicacion</span><strong>{config.rackArea}</strong></td>
-              <td><span>Fecha del reporte</span><strong>{generatedAt}</strong></td>
+              <td><span>Direccion de la empresa</span><strong>{config.companyAddress || 'No capturada'}</strong></td>
+              <td><span>Fecha de inspeccion</span><strong>{inspectionDateLabel}</strong></td>
             </tr>
             <tr>
+              <td><span>Area / ubicacion</span><strong>{config.rackArea}</strong></td>
+              <td><span>Fecha del reporte</span><strong>{generatedAt}</strong></td>
               <td><span>Rack inspeccionado</span><strong>{config.rackNumber}</strong></td>
+            </tr>
+            <tr>
               <td><span>Tipo de rack</span><strong>{config.rackType}</strong></td>
               <td><span>Formato de ubicacion</span><strong>Rack-Bahia-Nivel</strong></td>
+              <td><span>Folio</span><strong>{reportNumber}</strong></td>
             </tr>
           </tbody>
         </table>
@@ -1014,33 +1392,73 @@ function ReportPreview({
         </div>
       </section>
 
-      <section className="report-block">
-        <div className="report-section-banner">Resumen visual del rack</div>
-        <div
-          className="report-rack-map"
-          style={{ gridTemplateColumns: `repeat(${config.bays}, minmax(32px, 1fr))` }}
-        >
-          {mapPositions.map((position) => {
-            const detail = cellDetails[position.id] || {};
-            const className = [
-              'report-map-cell',
-              position.empty ? 'empty' : '',
-              detail.status === 'free' ? 'free' : '',
-              detail.finding ? 'finding' : '',
-            ].join(' ');
+      <section className="report-block report-page-start">
+        <div className="report-section-banner">Evaluacion general de cumplimiento normativo</div>
+        <div className={`report-compliance-summary ${complianceSummary.tone}`}>
+          <strong>Cumplimiento general: {complianceSummary.percentage}%</strong>
+          <span>Cumple: {complianceSummary.counts.cumple}</span>
+          <span>No cumple: {complianceSummary.counts['no-cumple']}</span>
+          <span>Pendientes: {complianceSummary.counts['no-aplica'] + complianceSummary.counts['no-verificado']}</span>
+        </div>
+        <table className="report-table report-compliance-table">
+          <thead>
+            <tr>
+              <th>Requisito</th>
+              <th>Estado</th>
+              <th>Observaciones</th>
+              <th>Recomendacion</th>
+            </tr>
+          </thead>
+          <tbody>
+            {complianceRows.map((item) => {
+              const status = item.detail.status || 'no-verificado';
+              const statusLabel = complianceStatuses.find((option) => option.value === status)?.label || 'No verificado';
 
-            return (
-              <span className={className} key={position.id}>
-                {position.empty ? '-' : formatPositionName(config, position)}
-              </span>
-            );
-          })}
-        </div>
-        <div className="report-legend">
-          <span><i className="legend-normal" /> Normal</span>
-          <span><i className="legend-free" /> Espacio libre / puente</span>
-          <span><i className="legend-finding" /> Con hallazgo</span>
-        </div>
+              return (
+                <tr key={item.id}>
+                  <td><strong>{item.name}</strong><span>{item.category}</span></td>
+                  <td>{statusLabel}</td>
+                  <td>{item.detail.observations || 'Sin observaciones.'}</td>
+                  <td>{status === 'no-cumple' ? item.detail.recommendation || item.recommendation : 'Sin recomendacion.'}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </section>
+
+      <section className="report-block report-page-start">
+        <div className="report-section-banner">Hallazgos generales</div>
+        {complianceFindings.length > 0 ? (
+          <table className="report-table report-compliance-table">
+            <thead>
+              <tr>
+                <th>Requisito</th>
+                <th>Observaciones</th>
+                <th>Recomendacion</th>
+                <th>Evidencia</th>
+              </tr>
+            </thead>
+            <tbody>
+              {complianceFindings.map((item) => (
+                <tr key={item.id}>
+                  <td>{item.name}</td>
+                  <td>{item.detail.observations || 'Sin observaciones.'}</td>
+                  <td>{item.detail.recommendation || item.recommendation}</td>
+                  <td>
+                    {item.detail.photo ? (
+                      <img className="report-photo" src={item.detail.photo} alt="Evidencia normativa" />
+                    ) : (
+                      'Sin foto'
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p>No se registraron hallazgos generales.</p>
+        )}
       </section>
 
       <section className="report-block">

@@ -12,6 +12,37 @@ const DEFAULT_TEMPLATE_CONFIG = {
   headerColor: "#1f1f1f"
 };
 
+const DEFAULT_COMPLIANCE_REQUIREMENTS = [
+  { category: "Senalizacion y seguridad", items: [
+    { id: "capacity-label", name: "Etiqueta de capacidad instalada y visible.", description: "Verificar que el rack cuente con etiqueta indicando capacidad maxima de carga.", recommendation: "Instalar etiqueta de capacidad visible indicando la capacidad maxima permitida del sistema de almacenamiento." },
+    { id: "manufacturer-plate", name: "Placa de identificacion del fabricante.", description: "Verificar que exista placa de identificacion con fabricante, modelo o datos del sistema.", recommendation: "Instalar o reponer placa de identificacion del sistema." },
+    { id: "marked-aisles", name: "Pasillos correctamente senalizados.", description: "Los pasillos deben estar claramente delimitados para circulacion segura.", recommendation: "Senalizar los pasillos conforme a las condiciones de operacion." },
+    { id: "load-signage", name: "Senalizacion de carga maxima.", description: "Verificar que exista senalizacion visible indicando restricciones de carga.", recommendation: "Instalar senalizacion de carga maxima permitida." },
+    { id: "impact-protection", name: "Proteccion contra impacto (Esquineros).", description: "Verificar existencia de protectores donde exista riesgo de impacto por montacargas.", recommendation: "Instalar protectores de columna o esquineros." },
+    { id: "convex-mirrors", name: "Espejos convexos.", description: "Verificar instalacion en cruces o zonas con poca visibilidad.", recommendation: "Instalar espejos convexos para reducir riesgos de colision." },
+    { id: "barriers-stops", name: "Topes o barreras de proteccion cuando sean necesarios.", description: "Verificar existencia de elementos que protejan el rack contra impactos.", recommendation: "Instalar barreras o topes de proteccion." }
+  ] },
+  { category: "Instalacion", items: [
+    { id: "anchors-installed", name: "Anclas instaladas correctamente.", description: "Verificar que todos los bastidores se encuentren correctamente anclados.", recommendation: "Instalar las anclas faltantes." },
+    { id: "anchor-torque", name: "Evidencia de torque de anclas.", description: "Confirmar que exista evidencia del torque aplicado durante la instalacion.", recommendation: "Realizar torque conforme a especificaciones del fabricante y documentarlo." },
+    { id: "verticality", name: "Verticalidad del sistema.", description: "Verificar que el rack no presente inclinaciones visibles.", recommendation: "Realizar alineacion y nivelacion del sistema." }
+  ] },
+  { category: "Operacion", items: [
+    { id: "no-overload", name: "No existen sobrecargas.", description: "Verificar que no se exceda la capacidad del rack.", recommendation: "Reducir carga conforme a capacidad del fabricante." },
+    { id: "no-unauthorized-mods", name: "No existen modificaciones no autorizadas.", description: "Verificar que no existan perforaciones, soldaduras o modificaciones estructurales.", recommendation: "Eliminar modificaciones no autorizadas y evaluar la estructura." }
+  ] },
+  { category: "Documentacion", items: [
+    { id: "maintenance-program", name: "Evidencia de programa de mantenimiento.", description: "Verificar existencia del programa de mantenimiento.", recommendation: "Implementar programa documentado." },
+    { id: "preventive-maintenance", name: "Evidencia de mantenimiento preventivo.", description: "Verificar registros de mantenimiento.", recommendation: "Realizar mantenimiento preventivo periodico." },
+    { id: "previous-findings-corrected", name: "Evidencia de correccion de hallazgos anteriores.", description: "Verificar registros de acciones correctivas.", recommendation: "Documentar la correccion de todos los hallazgos." },
+    { id: "periodic-inspections", name: "Evidencia de inspecciones periodicas.", description: "Verificar historial de inspecciones.", recommendation: "Implementar inspecciones periodicas documentadas." },
+    { id: "staff-training", name: "Evidencia de capacitacion del personal.", description: "Verificar que operadores y almacenistas hayan recibido capacitacion.", recommendation: "Capacitar al personal y conservar evidencia documental." }
+  ] }
+];
+
+const COMPLIANCE_FIRST_PAGE_ROWS = 10;
+const COMPLIANCE_CONTINUATION_ROWS = 15;
+
 const REPORT_STYLE = `
   @page { size: Letter; margin: 10mm; }
   * { box-sizing: border-box; }
@@ -38,6 +69,7 @@ const REPORT_STYLE = `
   .evidence-photo { width: 100%; object-fit: contain; display: block; background: #fff; }
   .evidence-photo.finding-photo { height: 48mm; }
   .evidence-photo.service-photo { height: 31mm; }
+  .report-thumb { width: 24mm; max-height: 20mm; object-fit: contain; display: block; border: 1px solid #999; background: #fff; }
   .evidence-label { margin-bottom: 1.2mm; }
   .evidence-topbar { display: flex; justify-content: flex-end; margin-bottom: 2mm; }
   .evidence-meta-box { border: 1px solid var(--header-color); background: #f7f7f7; padding: 2mm 2.4mm; min-width: 48mm; }
@@ -47,6 +79,29 @@ const REPORT_STYLE = `
   .muted { color: #666; font-style: italic; }
   .footer { position: absolute; bottom: 5mm; left: 8mm; right: 8mm; display: flex; justify-content: space-between; font-size: 7.5pt; color: #444; }
   .page-number::after { content: counter(page); }
+  .detail-page .page-inner { padding: 12mm 13mm 15mm; }
+  .detail-page .section-banner { margin-top: 0; margin-bottom: 3mm; padding: 2.4mm 3mm; }
+  .detail-page table { page-break-inside: auto; break-inside: auto; }
+  .detail-page tr { page-break-inside: avoid; break-inside: avoid; }
+  .detail-page thead { display: table-header-group; }
+  .detail-page .value { overflow-wrap: anywhere; }
+  .compliance-score-box { display: grid; grid-template-columns: 36mm repeat(4, 1fr); gap: 0; margin-bottom: 4mm; border: 1px solid var(--header-color); }
+  .compliance-score-box > div { min-height: 18mm; padding: 2.5mm; border-right: 1px solid var(--header-color); background: #f7f7f7; }
+  .compliance-score-box > div:last-child { border-right: 0; }
+  .compliance-score-box strong { display: block; margin-top: 1mm; font-size: 13pt; }
+  .compliance-bar { height: 3mm; margin-top: 2mm; background: #e7e7e7; border: 1px solid #bbb; }
+  .compliance-bar span { display: block; height: 100%; background: var(--accent-color); }
+  .compliance-table, .general-findings-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .compliance-table th, .compliance-table td, .general-findings-table th, .general-findings-table td { border: 1px solid var(--header-color); padding: 2.2mm 2.4mm; vertical-align: top; font-size: 8.4pt; line-height: 1.35; overflow-wrap: anywhere; }
+  .compliance-table th, .general-findings-table th { background: #efefef; text-transform: uppercase; font-size: 7.5pt; letter-spacing: 0.03em; text-align: left; }
+  .compliance-table.compact th, .compliance-table.compact td { padding: 1.65mm 1.9mm; font-size: 7.7pt; line-height: 1.22; }
+  .compliance-table.compact th { font-size: 7pt; }
+  .status-pill { display: inline-block; padding: 1mm 2mm; border-radius: 999px; font-size: 7.2pt; font-weight: 700; background: #efefef; }
+  .status-pill.cumple { background: #e8f6ef; color: #126b3c; }
+  .status-pill.no-cumple { background: #fdeaea; color: #9f2424; }
+  .status-pill.no-aplica { background: #eeeeee; color: #555; }
+  .status-pill.no-verificado { background: #fff4d6; color: #8b5d00; }
+  .section-note { margin: 0 0 4mm; padding: 2.5mm 3mm; border: 1px solid #cfcfcf; background: #fafafa; color: #444; font-size: 8.5pt; line-height: 1.35; }
   @media print {
     body { background: white; }
     .report-shell { width: auto; padding: 0; }
@@ -76,6 +131,8 @@ async function openReportPdfWindow(inspection, existingPopup) {
 <body>
   <div class="report-shell">
     ${renderCoverPage(reportData)}
+    ${renderCompliancePage(reportData)}
+    ${renderGeneralFindingsPage(reportData)}
     ${reportData.equipments.map((equipment, index) => renderEquipmentSection(reportData, equipment, index)).join("")}
   </div>
   <script>
@@ -97,15 +154,26 @@ async function buildReportData(inspection) {
   const totalFindings = equipments.reduce((sum, equipment) => sum + equipment.findings.length, 0);
   const totalServicePhotos = equipments.reduce((sum, equipment) => sum + equipment.servicePhotos.length, 0);
   const totalFindingPhotos = equipments.reduce((sum, equipment) => sum + equipment.totalFindingPhotos, 0);
+  const complianceRows = buildComplianceRows(inspection);
+  const complianceSummary = buildComplianceSummary(complianceRows);
+  const generalFindings = buildGeneralFindings(inspection, complianceRows);
 
   return {
     ...inspection,
+    reportNumber: inspection.reportFolio || inspection.reportNumber || inspection.config?.reportFolio || "",
+    plantName: inspection.plantName || inspection.companyName || inspection.config?.companyName || "",
+    plantLocation: inspection.plantLocation || inspection.companyAddress || inspection.config?.companyAddress || inspection.rackArea || inspection.config?.rackArea || "",
+    companyAddress: inspection.companyAddress || inspection.config?.companyAddress || "",
+    rackArea: inspection.rackArea || inspection.config?.rackArea || "",
     template,
     equipments,
+    complianceRows,
+    complianceSummary,
+    generalFindings,
     totalFindings,
     totalServicePhotos,
     totalFindingPhotos,
-    inspectionDateLabel: formatDate(inspection.inspectionDate)
+    inspectionDateLabel: formatDate(inspection.inspectionDate || inspection.config?.inspectionDate)
   };
 }
 
@@ -131,6 +199,114 @@ async function buildEquipmentData(equipment) {
   };
 }
 
+function buildComplianceRows(inspection) {
+  if (Array.isArray(inspection.complianceRows)) {
+    return inspection.complianceRows.map(normalizeComplianceRow);
+  }
+
+  const requirements = Array.isArray(inspection.complianceRequirements)
+    ? inspection.complianceRequirements
+    : DEFAULT_COMPLIANCE_REQUIREMENTS;
+  const details = inspection.complianceDetails || {};
+  const rows = requirements.flatMap((group) => {
+    const items = Array.isArray(group.items) ? group.items : [];
+    return items.map((item) => normalizeComplianceRow({
+      ...item,
+      category: group.category || item.category || "",
+      ...(details[item.id] || {})
+    }));
+  });
+
+  if (rows.length) return rows;
+
+  if (inspection.complianceDetails && typeof inspection.complianceDetails === "object") {
+    return Object.entries(inspection.complianceDetails).map(([id, detail]) => normalizeComplianceRow({
+      id,
+      ...detail
+    }));
+  }
+
+  return [];
+}
+
+function normalizeComplianceRow(row) {
+  const status = normalizeComplianceStatus(row.status || row.estado || "no-verificado");
+  return {
+    id: row.id || "",
+    category: row.category || row.categoria || "",
+    requirement: row.requirement || row.name || row.requisito || row.title || row.id || "Requisito",
+    status,
+    observations: row.observations || row.observaciones || row.notes || "",
+    recommendation: row.recommendation || row.recomendacion || "",
+    photo: row.photo || row.evidencePhoto || row.evidencia || ""
+  };
+}
+
+function buildComplianceSummary(rows) {
+  const counts = {
+    cumple: 0,
+    "no-cumple": 0,
+    "no-aplica": 0,
+    "no-verificado": 0
+  };
+
+  rows.forEach((row) => {
+    const status = normalizeComplianceStatus(row.status);
+    counts[status] = (counts[status] || 0) + 1;
+  });
+
+  const applicable = counts.cumple + counts["no-cumple"];
+  const percentage = applicable ? Math.round((counts.cumple / applicable) * 100) : 0;
+
+  return { counts, percentage };
+}
+
+function buildGeneralFindings(inspection, complianceRows) {
+  const explicitFindings = Array.isArray(inspection.generalFindings)
+    ? inspection.generalFindings.map((finding) => ({
+      title: finding.title || finding.requirement || finding.name || "Hallazgo",
+      category: finding.category || "",
+      observations: finding.observations || finding.description || "",
+      recommendation: finding.recommendation || "",
+      photo: finding.photo || finding.evidencePhoto || ""
+    }))
+    : [];
+
+  const complianceFindings = complianceRows
+    .filter((row) => normalizeComplianceStatus(row.status) === "no-cumple")
+    .map((row) => ({
+      title: row.requirement,
+      category: row.category,
+      observations: row.observations,
+      recommendation: row.recommendation,
+      photo: row.photo
+    }));
+
+  return [...explicitFindings, ...complianceFindings];
+}
+
+function normalizeComplianceStatus(status) {
+  const normalized = String(status || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/_/g, "-")
+    .trim();
+
+  if (["cumple", "ok", "si", "yes"].includes(normalized)) return "cumple";
+  if (["no-cumple", "no cumple", "incumple", "fail", "failed"].includes(normalized)) return "no-cumple";
+  if (["no-aplica", "no aplica", "na", "n/a"].includes(normalized)) return "no-aplica";
+  return "no-verificado";
+}
+
+function formatComplianceStatus(status) {
+  const normalized = normalizeComplianceStatus(status);
+  if (normalized === "cumple") return "Cumple";
+  if (normalized === "no-cumple") return "No cumple";
+  if (normalized === "no-aplica") return "No aplica";
+  return "No verificado";
+}
+
 function getTemplateConfig() {
   const custom = window.REPORT_TEMPLATE_CONFIG || {};
   const merged = { ...DEFAULT_TEMPLATE_CONFIG, ...custom };
@@ -153,7 +329,11 @@ function renderCoverPage(report) {
         <table class="meta-table">
           <tr>
             <td><div class="label">Cliente / Planta</div><div class="value">${escapeHtml(report.plantName || "No capturado")}</div></td>
-            <td><div class="label">Ubicacion</div><div class="value">${escapeHtml(report.plantLocation || "No capturado")}</div></td>
+            <td><div class="label">Direccion / Ubicacion</div><div class="value">${escapeHtml(report.plantLocation || "No capturado")}</div></td>
+          </tr>
+          <tr>
+            <td><div class="label">Area inspeccionada</div><div class="value">${escapeHtml(report.rackArea || "No capturada")}</div></td>
+            <td><div class="label">Fecha de inspeccion</div><div class="value">${escapeHtml(report.inspectionDateLabel || "No capturada")}</div></td>
           </tr>
           <tr>
             <td><div class="label">Reporte elaborado por</div><div class="value">${escapeHtml(report.technicianName || "No capturado")}</div></td>
@@ -170,6 +350,127 @@ function renderCoverPage(report) {
       </div>
       <div class="footer">
         <span>${escapeHtml(report.template.footerLegend)}</span>
+        <span>Pagina <span class="page-number"></span></span>
+      </div>
+    </section>
+  `;
+}
+
+function renderCompliancePage(report) {
+  const rows = report.complianceRows || [];
+  const summary = report.complianceSummary || buildComplianceSummary(rows);
+  const firstRows = rows.slice(0, COMPLIANCE_FIRST_PAGE_ROWS);
+  const remainingRows = rows.slice(COMPLIANCE_FIRST_PAGE_ROWS);
+  const continuationPages = [];
+
+  for (let index = 0; index < remainingRows.length; index += COMPLIANCE_CONTINUATION_ROWS) {
+    continuationPages.push(renderComplianceContinuationPage(
+      report,
+      remainingRows.slice(index, index + COMPLIANCE_CONTINUATION_ROWS),
+      continuationPages.length + 1
+    ));
+  }
+
+  return `
+    <section class="page detail-page">
+      <div class="page-inner">
+        <div class="section-banner">EVALUACION GENERAL DE CUMPLIMIENTO NORMATIVO</div>
+        <p class="section-note">Evaluacion general del sistema de racks basada en los criterios capturados durante la inspeccion. Esta seccion inicia en pagina independiente para facilitar revision, archivo y seguimiento.</p>
+        <div class="compliance-score-box">
+          <div>
+            <div class="label">Cumplimiento general</div>
+            <strong>${summary.percentage}%</strong>
+            <div class="compliance-bar"><span style="width:${summary.percentage}%"></span></div>
+          </div>
+          <div><div class="label">Cumple</div><strong>${summary.counts.cumple}</strong></div>
+          <div><div class="label">No cumple</div><strong>${summary.counts["no-cumple"]}</strong></div>
+          <div><div class="label">No aplica</div><strong>${summary.counts["no-aplica"]}</strong></div>
+          <div><div class="label">No verificado</div><strong>${summary.counts["no-verificado"]}</strong></div>
+        </div>
+        ${firstRows.length ? renderComplianceTable(firstRows, true) : `<table class="compliance-table"><tr><td><span class="muted">No se capturo informacion de cumplimiento normativo.</span></td></tr></table>`}
+      </div>
+      <div class="footer">
+        <span>${escapeHtml(report.reportNumber || "Sin folio")} | Cumplimiento normativo</span>
+        <span>Pagina <span class="page-number"></span></span>
+      </div>
+    </section>
+    ${continuationPages.join("")}
+  `;
+}
+
+function renderComplianceContinuationPage(report, rows, pageIndex) {
+  return `
+    <section class="page detail-page">
+      <div class="page-inner">
+        <div class="section-banner">EVALUACION GENERAL DE CUMPLIMIENTO NORMATIVO - CONTINUACION ${pageIndex}</div>
+        ${renderComplianceTable(rows, true)}
+      </div>
+      <div class="footer">
+        <span>${escapeHtml(report.reportNumber || "Sin folio")} | Cumplimiento normativo</span>
+        <span>Pagina <span class="page-number"></span></span>
+      </div>
+    </section>
+  `;
+}
+
+function renderComplianceTable(rows, compact = false) {
+  return `
+    <table class="compliance-table ${compact ? "compact" : ""}">
+      <thead>
+        <tr>
+          <th width="30%">Requisito</th>
+          <th width="14%">Estado</th>
+          <th width="28%">Observaciones</th>
+          <th width="28%">Recomendacion</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map((row) => `
+          <tr>
+            <td><strong>${escapeHtml(row.requirement || row.name || "Requisito")}</strong>${row.category ? `<div class="muted">${escapeHtml(row.category)}</div>` : ""}</td>
+            <td><span class="status-pill ${escapeHtml(normalizeComplianceStatus(row.status))}">${escapeHtml(formatComplianceStatus(row.status))}</span></td>
+            <td>${escapeHtml(row.observations || "Sin observaciones.")}</td>
+            <td>${escapeHtml(row.recommendation || (normalizeComplianceStatus(row.status) === "no-cumple" ? "Sin recomendacion registrada." : "No aplica."))}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderGeneralFindingsPage(report) {
+  const findings = report.generalFindings || [];
+
+  return `
+    <section class="page detail-page">
+      <div class="page-inner">
+        <div class="section-banner">HALLAZGOS GENERALES</div>
+        <p class="section-note">Hallazgos generales detectados durante la evaluacion del sistema. Los requisitos marcados como no cumple se listan automaticamente para seguimiento.</p>
+        ${findings.length ? `
+          <table class="general-findings-table">
+            <thead>
+              <tr>
+                <th width="26%">Hallazgo</th>
+                <th width="28%">Observaciones</th>
+                <th width="34%">Recomendacion</th>
+                <th width="12%">Evidencia</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${findings.map((finding) => `
+                <tr>
+                  <td><strong>${escapeHtml(finding.title || finding.requirement || "Hallazgo")}</strong>${finding.category ? `<div class="muted">${escapeHtml(finding.category)}</div>` : ""}</td>
+                  <td>${escapeHtml(finding.observations || finding.description || "Sin observaciones.")}</td>
+                  <td>${escapeHtml(finding.recommendation || "Sin recomendacion registrada.")}</td>
+                  <td>${finding.photo ? `<img class="report-thumb" src="${finding.photo}" alt="Evidencia">` : "Sin foto"}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        ` : `<table class="general-findings-table"><tr><td><span class="muted">No se registraron hallazgos generales.</span></td></tr></table>`}
+      </div>
+      <div class="footer">
+        <span>${escapeHtml(report.reportNumber || "Sin folio")} | Hallazgos generales</span>
         <span>Pagina <span class="page-number"></span></span>
       </div>
     </section>
