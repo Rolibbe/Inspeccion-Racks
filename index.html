@@ -1405,6 +1405,23 @@
         break-inside: avoid;
       }
 
+      .report-introduction-block {
+        min-height: 235mm;
+      }
+
+      .report-introduction-text {
+        padding: 12mm 4mm 0;
+        color: #1f2a33;
+        font-size: 0.94rem;
+        line-height: 1.75;
+        text-align: justify;
+      }
+
+      .report-introduction-text p {
+        margin: 0 0 14px;
+        text-align: justify;
+      }
+
       .report-summary-panel {
         display: grid;
         gap: 10px;
@@ -2025,6 +2042,25 @@
         return new Date(year, month - 1, day).toLocaleDateString('es-MX');
       }
 
+      const introductionText = `"La inspección de sistemas de almacenamiento es una actividad fundamental para conocer el estado estructural, operativo y de seguridad de los racks, especialmente cuando no existe evidencia de mantenimiento preventivo, correctivo o del historial de inspecciones realizadas. Este proceso permite identificar oportunamente condiciones inseguras, daños estructurales, desviaciones respecto a las especificaciones del fabricante y posibles riesgos que puedan comprometer la integridad del sistema o la seguridad del personal.
+
+Durante la inspección se evalúan los principales elementos estructurales, componentes de seguridad, condiciones de instalación, señalización y aspectos documentales relacionados con la operación del sistema de almacenamiento. Asimismo, se verifica el cumplimiento de los criterios técnicos establecidos por el fabricante y de las disposiciones aplicables en la NOM-006-STPS-2023, así como de las recomendaciones contenidas en la Rack Manufacturers Institute (RMI) – Specification for the Design, Testing and Utilization of Industrial Steel Storage Racks (2008).
+
+La evaluación se realiza mediante un proceso sistemático que incluye inspección visual, registro fotográfico, aplicación de listas de verificación (checklists) y documentación de los hallazgos detectados. Como resultado, se genera un reporte técnico que permite identificar las no conformidades encontradas, establecer el nivel de riesgo asociado y emitir recomendaciones orientadas a restablecer condiciones seguras de operación.
+
+Es indispensable que este tipo de inspecciones sean ejecutadas por personal competente y debidamente capacitado, con el conocimiento técnico necesario para evaluar correctamente las condiciones del sistema de almacenamiento, interpretar la normativa aplicable y emitir recomendaciones confiables. Una inspección realizada bajo estos criterios contribuye a prevenir accidentes, reducir riesgos operativos, prolongar la vida útil de la infraestructura y garantizar un entorno de trabajo más seguro para las personas y los procesos."`;
+
+      function normalizeIntroductionText(text) {
+        return String(text || '').trim().replace(/^"([\s\S]*)"$/, '$1').trim();
+      }
+
+      function splitIntroductionParagraphs(text) {
+        return normalizeIntroductionText(text)
+          .split(/\n\s*\n/)
+          .map((paragraph) => paragraph.trim())
+          .filter(Boolean);
+      }
+
       function renderSavedInspectionCard(inspection) {
         const config = inspection.config || inspection.rackConfig || {};
         const form = inspection.form || {};
@@ -2394,6 +2430,7 @@
         const generatedAt = new Date().toLocaleDateString('es-MX');
         const inspectionDateLabel = formatDisplayDate(config.inspectionDate);
         const reportNumber = config.reportFolio || `RACK-${String(config.rackNumber || 'SN').replace(/\s+/g, '-')}`;
+        const introductionParagraphs = splitIntroductionParagraphs(introductionText);
         const maxLevels = Math.max(...positions.map((position) => position.level), 1);
         const evidenceItems = reportItems.filter((position) => position.detail.photo);
         const complianceSummary = calculateComplianceSummary(appState.complianceDetails);
@@ -2543,6 +2580,15 @@
                   <span>Observaciones generales</span>
                   <p>${escapeHtml(config.observations || 'Sin observaciones generales registradas.')}</p>
                 </div>
+              </div>
+            </section>
+
+            <section class="report-block report-page-start report-introduction-block">
+              <div class="report-section-banner">INTRODUCCION</div>
+              <div class="report-introduction-text">
+                ${(introductionParagraphs.length ? introductionParagraphs : ['No se encontro contenido en introduccion.txt.'])
+                  .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
+                  .join('')}
               </div>
             </section>
 

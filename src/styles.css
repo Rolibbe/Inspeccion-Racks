@@ -1476,6 +1476,23 @@ textarea:focus {
   break-inside: avoid;
 }
 
+.report-introduction-block {
+  min-height: 235mm;
+}
+
+.report-introduction-text {
+  padding: 12mm 4mm 0;
+  color: #1f2a33;
+  font-size: 0.94rem;
+  line-height: 1.75;
+  text-align: justify;
+}
+
+.report-introduction-text p {
+  margin: 0 0 14px;
+  text-align: justify;
+}
+
 .report-summary-panel {
   display: grid;
   gap: 10px;

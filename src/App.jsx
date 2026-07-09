@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import introductionFallbackText from '../introduccion.txt?raw';
 
 const rackTypes = [
   'Selectivo',
@@ -212,6 +213,20 @@ function formatDisplayDate(value) {
   return new Date(year, month - 1, day).toLocaleDateString('es-MX');
 }
 
+function normalizeIntroductionText(text) {
+  return String(text || '')
+    .trim()
+    .replace(/^"([\s\S]*)"$/, '$1')
+    .trim();
+}
+
+function splitIntroductionParagraphs(text) {
+  return normalizeIntroductionText(text)
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+}
+
 function calculateComplianceSummary(details = {}) {
   const counts = {
     cumple: 0,
@@ -289,6 +304,7 @@ function App() {
   const [selectedCell, setSelectedCell] = useState(null);
   const [cellDetails, setCellDetails] = useState({});
   const [complianceDetails, setComplianceDetails] = useState({});
+  const [introductionText, setIntroductionText] = useState(introductionFallbackText);
 
   const hasActiveWork = Boolean(
     rackConfig || Object.keys(cellDetails).length > 0 || Object.keys(complianceDetails).length > 0 || hasFormData(form)
@@ -297,6 +313,13 @@ function App() {
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(savedInspections));
   }, [savedInspections]);
+
+  useEffect(() => {
+    fetch('/introduccion.txt', { cache: 'no-store' })
+      .then((response) => (response.ok ? response.text() : introductionFallbackText))
+      .then((text) => setIntroductionText(text || introductionFallbackText))
+      .catch(() => setIntroductionText(introductionFallbackText));
+  }, []);
 
   useEffect(() => {
     if (!activeInspectionId || !hasActiveWork) return;
@@ -581,8 +604,9 @@ function App() {
           bayLevels={normalizeBayLevels(rackConfig, bayLevels)}
           selectedCell={selectedCell}
           cellDetails={cellDetails}
-          complianceDetails={complianceDetails}
-          onSelectCell={handleSelectCell}
+        complianceDetails={complianceDetails}
+        introductionText={introductionText}
+        onSelectCell={handleSelectCell}
           onUpdateCell={handleUpdateCell}
           onUpdateCompliance={handleUpdateCompliance}
           onSetBayLevel={handleSetBayLevel}
@@ -839,6 +863,7 @@ function RackScreen({
   selectedCell,
   cellDetails,
   complianceDetails,
+  introductionText,
   onSelectCell,
   onUpdateCell,
   onUpdateCompliance,
@@ -1051,6 +1076,7 @@ function RackScreen({
         cellDetails={cellDetails}
         complianceDetails={complianceDetails}
         complianceSummary={complianceSummary}
+        introductionText={introductionText}
         reportItems={reportItems}
         findingCount={findingCount}
         freeSpaceCount={freeSpaceCount}
@@ -1301,6 +1327,7 @@ function ReportPreview({
   cellDetails,
   complianceDetails,
   complianceSummary,
+  introductionText,
   reportItems,
   findingCount,
   freeSpaceCount,
@@ -1308,6 +1335,7 @@ function ReportPreview({
   const generatedAt = new Date().toLocaleDateString('es-MX');
   const inspectionDateLabel = formatDisplayDate(config.inspectionDate);
   const reportNumber = config.reportFolio || `RACK-${String(config.rackNumber || 'SN').replace(/\s+/g, '-')}`;
+  const introductionParagraphs = splitIntroductionParagraphs(introductionText);
   const maxLevels = Math.max(...positions.map((position) => position.level), 1);
   const evidenceItems = reportItems.filter((position) => position.detail.photo);
   const complianceRows = complianceRequirements.flatMap((group) => (
@@ -1389,6 +1417,15 @@ function ReportPreview({
             <span>Observaciones generales</span>
             <p>{config.observations || 'Sin observaciones generales registradas.'}</p>
           </div>
+        </div>
+      </section>
+
+      <section className="report-block report-page-start report-introduction-block">
+        <div className="report-section-banner">INTRODUCCION</div>
+        <div className="report-introduction-text">
+          {(introductionParagraphs.length ? introductionParagraphs : ['No se encontro contenido en introduccion.txt.']).map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
         </div>
       </section>
 

@@ -102,6 +102,9 @@ const REPORT_STYLE = `
   .status-pill.no-aplica { background: #eeeeee; color: #555; }
   .status-pill.no-verificado { background: #fff4d6; color: #8b5d00; }
   .section-note { margin: 0 0 4mm; padding: 2.5mm 3mm; border: 1px solid #cfcfcf; background: #fafafa; color: #444; font-size: 8.5pt; line-height: 1.35; }
+  .introduction-title { margin: 0 0 7mm; padding-bottom: 2.5mm; border-bottom: 2px solid var(--accent-color); font-size: 19pt; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+  .introduction-content { margin-top: 6mm; font-size: 10.2pt; line-height: 1.62; color: #222; text-align: justify; }
+  .introduction-content p { margin: 0 0 5mm; text-align: justify; }
   @media print {
     body { background: white; }
     .report-shell { width: auto; padding: 0; }
@@ -131,6 +134,7 @@ async function openReportPdfWindow(inspection, existingPopup) {
 <body>
   <div class="report-shell">
     ${renderCoverPage(reportData)}
+    ${renderIntroductionPages(reportData)}
     ${renderCompliancePage(reportData)}
     ${renderGeneralFindingsPage(reportData)}
     ${reportData.equipments.map((equipment, index) => renderEquipmentSection(reportData, equipment, index)).join("")}
@@ -148,6 +152,7 @@ async function openReportPdfWindow(inspection, existingPopup) {
 
 async function buildReportData(inspection) {
   const template = getTemplateConfig();
+  const introductionText = await loadIntroductionText();
   const equipments = await Promise.all(
     (Array.isArray(inspection.equipments) ? inspection.equipments : []).map((equipment) => buildEquipmentData(equipment))
   );
@@ -166,6 +171,7 @@ async function buildReportData(inspection) {
     companyAddress: inspection.companyAddress || inspection.config?.companyAddress || "",
     rackArea: inspection.rackArea || inspection.config?.rackArea || "",
     template,
+    introductionText,
     equipments,
     complianceRows,
     complianceSummary,
@@ -175,6 +181,24 @@ async function buildReportData(inspection) {
     totalFindingPhotos,
     inspectionDateLabel: formatDate(inspection.inspectionDate || inspection.config?.inspectionDate)
   };
+}
+
+async function loadIntroductionText() {
+  const introductionFiles = [
+    "introduccion.txt",
+    "templates/introduccion.txt"
+  ];
+
+  for (const filePath of introductionFiles) {
+    try {
+      const response = await fetch(filePath, { cache: "no-store" });
+      if (response.ok) return (await response.text()).trim();
+    } catch {
+      // Try the next editable introduction file.
+    }
+  }
+
+  return "";
 }
 
 async function buildEquipmentData(equipment) {
@@ -354,6 +378,88 @@ function renderCoverPage(report) {
       </div>
     </section>
   `;
+}
+
+function renderIntroductionPages(report) {
+  const pages = splitIntroductionText(report.introductionText || "");
+
+  if (!pages.length) {
+    pages.push(["No se encontro contenido en introduccion.txt."]);
+  }
+
+  return pages.map((paragraphs, index) => `
+    <section class="page detail-page introduction-page">
+      <div class="page-inner">
+        ${renderHeader(report)}
+        <h1 class="introduction-title">INTRODUCCIÓN${index > 0 ? " - CONTINUACIÓN" : ""}</h1>
+        <div class="introduction-content">
+          ${paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}
+        </div>
+      </div>
+      <div class="footer">
+        <span>${escapeHtml(report.reportNumber || "Sin folio")} | Introduccion</span>
+        <span>Pagina <span class="page-number"></span></span>
+      </div>
+    </section>
+  `).join("");
+}
+
+function splitIntroductionText(text) {
+  const maxCharactersPerPage = 3200;
+  const paragraphs = String(text || "")
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+  const pages = [];
+  let currentPage = [];
+  let currentLength = 0;
+
+  paragraphs.forEach((paragraph) => {
+    if (paragraph.length > maxCharactersPerPage) {
+      const chunks = splitLongParagraph(paragraph, maxCharactersPerPage);
+      chunks.forEach((chunk) => {
+        if (currentPage.length) {
+          pages.push(currentPage);
+          currentPage = [];
+          currentLength = 0;
+        }
+        pages.push([chunk]);
+      });
+      return;
+    }
+
+    const nextLength = currentLength + paragraph.length;
+    if (currentPage.length && nextLength > maxCharactersPerPage) {
+      pages.push(currentPage);
+      currentPage = [];
+      currentLength = 0;
+    }
+
+    currentPage.push(paragraph);
+    currentLength += paragraph.length;
+  });
+
+  if (currentPage.length) pages.push(currentPage);
+  return pages;
+}
+
+function splitLongParagraph(paragraph, maxCharacters) {
+  const words = paragraph.split(/\s+/);
+  const chunks = [];
+  let chunk = "";
+
+  words.forEach((word) => {
+    const nextChunk = chunk ? `${chunk} ${word}` : word;
+    if (nextChunk.length > maxCharacters && chunk) {
+      chunks.push(chunk);
+      chunk = word;
+      return;
+    }
+    chunk = nextChunk;
+  });
+
+  if (chunk) chunks.push(chunk);
+  return chunks;
 }
 
 function renderCompliancePage(report) {
